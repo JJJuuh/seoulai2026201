@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 커스텀 스타일 (CSS 기법 적용) ---
+# --- 커스텀 스타일 (CSS 기법 적용 - 오류 원인 수정 완료) ---
 st.markdown("""
     <style>
         .main-title { font-size: 28px; font-weight: bold; color: #1E3A8A; margin-bottom: 5px; }
@@ -20,7 +20,7 @@ st.markdown("""
         .success-box { padding: 12px; background-color: #DEF7EC; color: #03543F; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
         .info-box { padding: 12px; background-color: #EBF5FF; color: #1E429F; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
     </style>
-""", unsafe_gradient=True, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # --- 헤더 섹션 ---
 st.markdown('<div class="main-title">📊 3. 데이터 시각화 & 전처리 (EDA)</div>', unsafe_allow_html=True)
@@ -34,7 +34,7 @@ if os.path.exists(data_path):
     df = df_raw.copy()
     
     # ---------------------------------------------------------
-    # 🛠️ [고도화] 결측치 및 이상치 평균값 대체 전처리 파트
+    # 🛠️ 데이터 전처리 파트 (결측치 & 이상치 평균값 대체)
     # ---------------------------------------------------------
     st.markdown("### 🛠️ 1. 고급 데이터 정제 (결측치 & 이상치 처리)")
     
@@ -50,9 +50,7 @@ if os.path.exists(data_path):
             st.markdown("##### 🧼 평균값 기반 자동 정제 진행 상황")
             
             # 1. 결측치(NaN)를 평균값으로 대체
-            null_columns = [col for col in df.columns if df[col].isnull().sum() > 0]
             replaced_null_count = 0
-            
             for col in df.columns:
                 if df[col].dtype in ['int64', 'float64']:
                     null_cnt = df[col].isnull().sum()
@@ -61,7 +59,6 @@ if os.path.exists(data_path):
                         df[col] = df[col].fillna(mean_val)
                         replaced_null_count += null_cnt
                 else:
-                    # 범주형(문자열) 결측치는 평균을 낼 수 없으므로 최빈값으로 보완 대체
                     null_cnt = df[col].isnull().sum()
                     if null_cnt > 0:
                         mode_val = df[col].mode()[0] if not df[col].mode().empty else "Unknown"
@@ -81,18 +78,14 @@ if os.path.exists(data_path):
                 q3 = df[col].quantile(0.75)
                 iqr = q3 - q1
                 
-                # 이상치 경계선 계산 (IQR 범위의 1.5배)
                 lower_bound = q1 - 1.5 * iqr
                 upper_bound = q3 + 1.5 * iqr
                 
-                # 이상치 조건에 맞는 행 위치 확인
                 outlier_mask = (df[col] < lower_bound) | (df[col] > upper_bound)
                 outlier_cnt = outlier_mask.sum()
                 
                 if outlier_cnt > 0:
-                    # 이상치가 아닌 정상 데이터들만의 평균값 계산
                     normal_mean = df_raw.loc[~outlier_mask, col].mean()
-                    # 이상치 데이터를 정상 평균값으로 대체
                     df.loc[outlier_mask, col] = normal_mean
                     replaced_outlier_count += outlier_cnt
                     
@@ -101,7 +94,6 @@ if os.path.exists(data_path):
             else:
                 st.markdown('<div class="info-box">ℹ️ 탐지된 뚜렷한 극단적 이상치(Outlier)가 없습니다. 모두 정상 범위 내에 있습니다.</div>', unsafe_allow_html=True)
                 
-        # 정제 후 데이터 미리보기
         st.markdown("##### 📄 전처리가 완료된 데이터셋 미리보기 (상위 5개 행)")
         st.dataframe(df.head(5), use_container_width=True)
 
@@ -191,8 +183,8 @@ if os.path.exists(data_path):
     # --- 정보 가이드 ---
     with st.expander("💡 데이터 시각화 및 인사이트 도출 가이드"):
         st.markdown(f"""
-        * 현재 정제 데이터셋 크기: **{df.shape[0]}행** (이상치와 결측치가 원본 데이터의 평균값으로 부드럽게 조정되어 누락된 샘플 없이 분석을 수행합니다.)
-        * 데이터가 극단값(이상치)에 왜곡되지 않으므로, 바 차트 평균값 연산 및 산점도 선형 추세선(`OLS`) 결과의 신뢰도가 크게 상승했습니다.
+        * 현재 정제 데이터셋 크기: **{df.shape[0]}행**
+        * 이상치와 결측치가 원본 데이터의 평균값으로 부드럽게 조정되어 누락 없이 안정적인 통계 분석이 가능합니다.
         """)
 
 else:
