@@ -27,6 +27,26 @@ if os.path.exists(data_path):
     # ----------------------------------------------------------------
     all_columns = df.columns.tolist()
     
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        default_x = all_columns.index("daily_social_media_hours") if "daily_social_media_hours" in all_columns else 0
+        x_axis = st.selectbox("🎯 X축에 놓을 변수 선택 (원인 또는 기준)", options=all_columns, index=default_x)
+        
+    with col2:
+        default_y = all_columns.index("stress_level") if "stress_level" in all_columns else min(1, len(all_columns)-1)
+        y_axis = st.selectbox("📈 Y축에 놓을 변수 선택 (결과 또는 비교 대상)", options=all_columns, index=default_y)
+        
+    with col3:
+        color_options = ["None"] + all_columns
+        color_target = st.selectbox("🎨 색상 구분 기준 (그룹 쪼개기)", options=color_options, index=0)
+        color_var = None if color_target == "None" else color_target
+
+    st.markdown("---")
+
+    # 💡 [AI가 만든 느낌 제거 핵심] 선택된 변수들이 무엇을 뜻하는지 인간적인 언어로 실시간 요약 브리핑 제공
+    st.markdown(f"### 🔍 현재 분석 중인 항목 돋보기")
+    
     # 변수명 한글 번역 가이드 사전
     var_desc = {
         "age": "학생들의 나이(연령대별 차이 확인 가능)",
@@ -44,15 +64,16 @@ if os.path.exists(data_path):
         "depression_label": "우울감 위험 신호 여부 (정서적 고위험군 분류)",
         "academic_performance_group": "성적 중앙값 기준 상위권/하위권 그룹"
     }
-
-    # 박스 플롯 폭발을 막기 위한 범주형 변수 리스트 따로 정의
-    categorical_cols = ["gender", "platform_usage", "social_interaction_level", "depression_label", "academic_performance_group", "age"]
-    categorical_cols = [c for c in categorical_cols if c in all_columns]
     
-    col1, col2, col3 = st.columns(3)
+    desc_x = var_desc.get(x_axis, "데이터셋에 포함된 고유 지표")
+    desc_y = var_desc.get(y_axis, "데이터셋에 포함된 고유 지표")
+    desc_c = var_desc.get(color_target, "그룹 분리 기준 없음")
     
-    # 💡 [핵심 제어] 사용자가 화면에서 라디오 버튼으로 뭘 골랐는지 실시간 추적하기 위해 st.session_state나 사전 조율 없이
-    # 라디오 버튼의 위치를 변수 선택창 위로 살짝 올려서 흐름을 자연스럽게 잡아줍니다. (코드가 꼬이지 않는 가장 안전한 방법)
+    st.write(f"• **X축 [`{x_axis}`]** : {desc_x}")
+    st.write(f"• **Y축 [`{{y_axis}}`]** : {desc_y}")
+    if color_var:
+        st.write(f"• **색상 기준 [`{color_target}`]** : 이 변수를 기준으로 학생들을 쪼개서 비교합니다. ({desc_c})")
+    
     st.markdown("---")
 
     tab1, tab2, tab3 = st.tabs(["📊 내가 고른 변수로 차트 보기", "🔥 변수 간 전체 연관성 지도 (Heatmap)", "🎯 한눈에 보기 쉬운 차트 가이드"])
@@ -69,38 +90,6 @@ if os.path.exists(data_path):
             horizontal=True
         )
         
-        st.markdown("##### ⚙️ 차트 축 세부 설정")
-        sub_col1, sub_col2, sub_col3 = st.columns(3)
-        
-        with sub_col1:
-            # 🔥 오직 '② 박스 플롯'을 선택했을 때만 X축을 그룹형 범주 변수로 강제 제한합니다!
-            if "② 박스 플롯" in chart_choice:
-                box_x_options = categorical_cols
-                default_x = box_x_options.index("academic_performance_group") if "academic_performance_group" in box_x_options else 0
-                x_axis = st.selectbox("🎯 X축 변수 선택 (박스플롯 전용 그룹)", options=box_x_options, index=default_x, key="box_x")
-            else:
-                default_x = all_columns.index("daily_social_media_hours") if "daily_social_media_hours" in all_columns else 0
-                x_axis = st.selectbox("🎯 X축에 놓을 변수 선택", options=all_columns, index=default_x, key="normal_x")
-                
-        with sub_col2:
-            default_y = all_columns.index("stress_level") if "stress_level" in all_columns else min(1, len(all_columns)-1)
-            y_axis = st.selectbox("📈 Y축에 놓을 변수 선택 (비교 대상)", options=all_columns, index=default_y)
-            
-        with sub_col3:
-            color_options = ["None"] + all_columns
-            color_target = st.selectbox("🎨 색상 구분 기준 (그룹 쪼개기)", options=color_options, index=0)
-            color_var = None if color_target == "None" else color_target
-
-        st.markdown("---")
-        
-        # 🔍 변수 돋보기 브리핑 내용도 선택에 따라 실시간 연동
-        desc_x = var_desc.get(x_axis, "데이터셋에 포함된 고유 지표")
-        desc_y = var_desc.get(y_axis, "데이터셋에 포함된 고유 지표")
-        
-        st.markdown(f"**🔍 선택된 변수 한글 해설**")
-        st.caption(f"• **X축 (`{x_axis}`)** : {desc_x} | • **Y축 (`{y_axis}`)** : {desc_y}")
-        st.markdown("---")
-
         chart_title = f"'{x_axis}'와 '{y_axis}'의 관계" + (f" (기준: {color_target})" if color_var else "")
         
         if "① 바 차트" in chart_choice:
@@ -120,10 +109,12 @@ if os.path.exists(data_path):
             )
             st.plotly_chart(fig_bar, use_container_width=True)
             
+            # 🔍 세부 설명 강화
             st.info(f"""
-            **🧐 이 바 차트 팁:**
-            - 지금 고르신 **{x_axis}**의 조건에 따라 **{y_axis}**의 평균치가 얼마나 높고 낮은지 막대의 높이로 바로 비교할 수 있습니다. 
-            - 집단 간의 '단순 평균 차이'를 누군가에게 설명할 때 가장 직관적이고 강력한 무기가 됩니다.
+            **🧐 이 바 차트를 깊게 읽는 방법 (Deep Insight):**
+            1. **막대의 높이가 주는 의미**: 현재 그래프는 **{x_axis}** 조건에 따른 **{y_axis}**의 '평균값'을 나타냅니다. 막대가 유독 높게 솟아오른 구간이 있다면, 그 조건에 처한 청소년들이 해당 문제나 지표에 가장 취약하다는 뜻입니다.
+            2. **그룹 간 격차 관전 포인트**: {"오른쪽 선택창에서 고른 `" + color_target + "`에 따라 막대 색상이 나뉩니다. 색상별 높낮이 차이가 뚜렷할수록, 같은 조건 안에서도 그룹에 따라 확연한 차이가 발생함을 의미합니다." if color_var else "현재는 단일 그룹 데이터입니다. 색상 분리 기준을 선택하시면 집단 간 격차를 한눈에 볼 수 있습니다."}
+            3. **실전 팁**: 대중적인 보고서나 발표 자료를 만들 때는 복잡한 분포보다 이 '평균 바 차트'가 메시지를 전달하기에 가장 쉽고 명확합니다.
             """)
             
         elif "② 박스 플롯" in chart_choice:
@@ -136,11 +127,12 @@ if os.path.exists(data_path):
             )
             st.plotly_chart(fig_box, use_container_width=True)
             
+            # 🔍 세부 설명 강화
             st.info(f"""
-            **🧐 이 박스 플롯 팁 (업데이트 완료):**
-            - 박스 플롯이 너무 촘촘하게 쪼개져 가독성이 떨어지는 문제를 방지하기 위해, 현재 X축은 비교하기 적절한 **그룹형 변수({x_axis})**만 나오도록 자동 필터링 되었습니다.
-            - 단순 평균값 하나만 보면 집단 내부의 사정을 놓치기 쉽습니다. 
-            - 이 상자 그림은 각 그룹 안에서 **{y_axis}** 점수가 위아래로 얼마나 넓게 퍼져 있는지(최고점, 최저점, 중간에 몰린 범위)를 보여주므로 고위험군이나 특이 집단을 찾아내기 좋습니다.
+            **🧐 이 박스 플롯을 깊게 읽는 방법 (Deep Insight):**
+            1. **상자와 수염 모양 해석하기**: 가운데 굵은 가로선은 딱 중간에 위치한 학생의 점수(중앙값)입니다. 상자의 위아래 길이는 학생들의 50%가 밀집해 있는 주된 점수 구간입니다. 위아래로 길게 뻗은 선(수염)은 데이터의 전체적인 범위를 뜻합니다.
+            2. **현장 분석관의 눈**: 평균값은 정상이어도, 특정 집단에서 상자가 위쪽으로 길게 늘어지거나 삐져나온 점(이상치)이 많다면 그 집단 내에 정서적·학업적 관리가 시급한 **'고위험군 아이들'이 많이 잠재되어 있다**는 강력한 증거가 됩니다. 
+            3. **매칭 분석**: **{x_axis}**가 변화함에 따라 **{y_axis}** 상자의 위치가 위아래로 요동치는지 주목해 보세요.
             """)
             
         elif "③ 산점도" in chart_choice:
@@ -154,14 +146,16 @@ if os.path.exists(data_path):
             )
             st.plotly_chart(fig_scatter, use_container_width=True)
             
+            # 🔍 세부 설명 강화
             st.info(f"""
-            **🧐 이 산점도 팁:**
-            - 흩뿌려진 점들이 오른쪽 위를 향해 올라가는 흐름인지, 반대로 내려가는 흐름인지 보세요.
-            - **{x_axis}**가 늘어날 때 **{y_axis}**도 덩달아 증가하는 성향이 있는지, 아니면 아무런 규칙 없이 둥글게 뭉쳐있는지 한눈에 훑어볼 수 있습니다.
+            **🧐 이 산점도를 깊게 읽는 방법 (Deep Insight):**
+            1. **점들의 행진 방향 찾기**: 점들이 우상향(오른쪽 위로 대각선 흐름)하면 **{x_axis}**가 많아질수록 **{y_axis}**도 같이 증가하는 강한 동맹 관계입니다. 반대로 우하향하면 하나가 커질 때 다른 하나는 억제되는 반비례 관계입니다.
+            2. **구름 형태나 무작위 패턴**: 만약 점들이 사방에 동그란 구름처럼 퍼져 있다면, 두 변수는 서로 아무런 영향을 주지 않고 따로 노는 '독립적인 관계'에 가깝습니다.
+            3. **사각지대 탐색**: 그래프의 극단적인 모서리(예: 맨 오른쪽 위, 맨 오른쪽 아래)에 찍힌 아이들이 있는지 보세요. 그 아이들이 우리가 집중 케어해야 하거나, 혹은 아주 모범적인 생활 패턴을 가진 특이 케이스의 학생들입니다.
             """)
             
         elif "④ 히스토그램" in chart_choice:
-            st.markdown(f"#### 📐 {x_axis} 데이터의 빈도 빈도수 분포")
+            st.markdown(f"#### 📐 {x_axis} 데이터의 빈도수 분포")
             fig_hist = px.histogram(
                 df, x=x_axis, color=color_var,
                 title=f"선택한 {x_axis} 데이터의 덩어리 분포 상황",
@@ -172,10 +166,12 @@ if os.path.exists(data_path):
             )
             st.plotly_chart(fig_hist, use_container_width=True)
             
+            # 🔍 세부 설명 강화
             st.info(f"""
-            **🧐 이 히스토그램 팁:**
-            - Y축은 사용자가 따로 고른 변수와 상관없이, 현재 X축에 놓인 **{x_axis}** 데이터에 해당하는 학생이 몇 명이나 존재하느냐(빈도수)를 보여줍니다.
-            - 우리 학생들이 주로 어떤 시간대나 점수대에 가장 많이 몰려 분포해 있는지 지형을 파악하기 좋습니다.
+            **🧐 이 히스토그램을 깊게 읽는 방법 (Deep Insight):**
+            1. **Y축의 비밀**: 히스토그램의 Y축은 사용자가 선택한 Y축 변수와 관계없이 오직 **'학생 수(데이터 개수)'**만 의미합니다. 
+            2. **지형지물 분석**: 그래프가 낙타 등처럼 봉우리가 높게 솟은 곳이 우리 청소년들이 대다수 몰려 있는 '평범한 일상 구간'입니다. 반대로 양쪽 끝자락의 낮고 평평한 곳은 아주 드문 케이스입니다.
+            3. **집단 간 면적 비교**: {"색상 기준인 `" + color_target + "` 그룹들이 서로 파도처럼 겹쳐 보일 것입니다. 어떤 그룹의 그래프 덩어리가 더 오른쪽(혹은 높은 점수대)에 치우쳐 있는지 비교하면, 두 집단의 전반적인 특성 차이를 직관적으로 파악할 수 있습니다." if color_var else "색상 기준을 선택하시면 집단별 데이터 분포 덩어리를 겹쳐서 비교해 볼 수 있습니다."}
             """)
 
     # ----------------------------------------------------------------
@@ -200,8 +196,8 @@ if os.path.exists(data_path):
         
         st.info("""
         **🧐 이 히트맵 지도를 읽는 방법:**
-        - **+1(진한 빨간색)**에 가까울수록 "A가 커질 때 B도 무조건 커지는 동맹 관계"입니다.
-        - **-1(진한 푸른색)**에 가까울수록 "A가 커지면 B는 반대로 뚝 떨어지는 가위바위보 반대 관계"입니다.
+        - +1(진한 빨간색)에 가까울수록 "A가 커질 때 B도 무조건 커지는 동맹 관계"입니다.
+        - -1(진한 푸른색)에 가까울수록 "A가 커지면 B는 반대로 뚝 떨어지는 가위바위보 반대 관계"입니다.
         - 수많은 변수를 하나씩 그래프로 그려 대조할 필요 없이, 이 지도 한 장이면 가장 밀접하게 연결된 단짝 변수쌍을 3초 만에 찾아낼 수 있습니다.
         """)
 
