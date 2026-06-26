@@ -3,15 +3,10 @@ import pandas as pd
 import plotly.express as px
 import os
 
-st.title("📊 청소년 소셜미디어(SNS) 사용이 성적과 스트레스에 미치는 진짜 영향 (EDA)")
+st.title("📊 청소년 정신 건강 및 소셜미디어 데이터 자유 시각화 (EDA)")
 st.markdown("""
-**🎯 우리가 진짜 궁금한 이야기**
-요즘 우리 학생들, 공부할 때나 쉴 때나 스마트폰과 AI, 소셜미디어를 손에서 놓지 못하죠. 
-이 모습을 보며 많은 부모님과 선생님들이 걱정하십니다. "저러다 성적 떨어지는 거 아닐까?", "스트레스만 더 받는 거 아닐까?"
-실제 데이터를 바탕으로 아래 질문들에 대한 답을 시원하게 찾아보겠습니다.
-
-* *📱 소셜미디어를 많이 하면 정말 스트레스가 쌓일까?*
-* *📉 특히 성적이 안 좋거나 공부가 뒤처진 학생이 스마트폰을 더 많이 붙잡고, 스트레스도 배로 받을까?*
+이 페이지에서는 데이터셋에 포함된 다양한 요소들을 사용자가 직접 조합하여 자유롭게 분석할 수 있습니다.
+왼쪽 선택창에서 알고 싶은 변수들을 골라 조합해 보세요!
 """)
 
 data_path = "Teen_Mental_Health_Dataset.csv"
@@ -21,114 +16,140 @@ if os.path.exists(data_path):
     
     st.markdown("---")
     
-    # 분석의 직관성을 위해 성적 중앙값 기준으로 학생들을 이해하기 쉽게 분류
+    # 분석의 편리함을 위해 '학업 성취도'를 그룹화한 변수 하나를 데이터셋에 기본 포함해 둡니다.
     median_academic = df['academic_performance'].median()
-    df['학업성취도 그룹'] = df['academic_performance'].apply(
-        lambda x: '상위권 학생 (공부 잘하는 편)' if x >= median_academic else '하위권 학생 (공부 힘들어하는 편)'
+    df['academic_performance_group'] = df['academic_performance'].apply(
+        lambda x: '상위권 (성적 높음)' if x >= median_academic else '하위권 (성적 낮음)'
     )
     
-    # 탭 이름도 딱딱한 용어 대신 직관적인 표현으로 변경
-    tab1, tab2, tab3 = st.tabs(["📊 한눈에 비교하기 (분포·평균)", "🔥 얽히고설킨 관계 찾기 (상관성)", "🎯 분석 요약 및 인간적인 결론"])
+    # ----------------------------------------------------------------
+    # ⚙️ 사용자가 직접 제어하는 변수 선택 영역
+    # ----------------------------------------------------------------
+    all_columns = df.columns.tolist()
+    
+    # 사용자가 보기 편하도록 한글 가이드 제공용 추천 목록 분리
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        # X축은 주로 기준이 되는 범주형이나 수치형 변수를 놓습니다.
+        default_x = all_columns.index("daily_social_media_hours") if "daily_social_media_hours" in all_columns else 0
+        x_axis = st.selectbox("🎯 X축에 놓을 변수 선택", options=all_columns, index=default_x)
+        
+    with col2:
+        # Y축은 변화를 관찰할 수치형 변수를 추천합니다.
+        default_y = all_columns.index("stress_level") if "stress_level" in all_columns else min(1, len(all_columns)-1)
+        y_axis = st.selectbox("📈 Y축에 놓을 변수 선택 (비교 대상)", options=all_columns, index=default_y)
+        
+    with col3:
+        # 그룹 구분을 위한 옵션 리스트
+        color_options = ["None"] + all_columns
+        color_target = st.selectbox("🎨 색상 구분 기준 (그룹 쪼개기)", options=color_options, index=0)
+        color_var = None if color_target == "None" else color_target
+
+    st.markdown("---")
+
+    # 탭 구조 설계: 1. 자유 변수 시각화 -> 2. 전체 연관성 지도 (히트맵) -> 3. 어떤 차트가 제일 보기 편할까?
+    tab1, tab2, tab3 = st.tabs(["📊 내가 고른 변수로 차트 보기", "🔥 변수 간 전체 연관성 지도 (Heatmap)", "🎯 한눈에 보기 쉬운 차트 가이드"])
     
     # ----------------------------------------------------------------
-    # TAB 1: 한눈에 비교하기 (이해하기 쉬운 기초 차트 배치)
+    # TAB 1: 사용자가 고른 변수로 그려지는 자유 차트 영역
     # ----------------------------------------------------------------
     with tab1:
-        st.subheader("1. 성적에 따라 매체 사용량과 스트레스가 어떻게 다를까?")
+        st.subheader("1. 선택한 변수로 맞춤형 그래프 그리기")
         
         chart_choice = st.radio(
-            "보고 싶은 그래프를 선택해 주세요:",
-            ["① 스마트폰 사용 시간 비교 (히스토그램)", "② 성적별 평균 스트레스 비교 (바 차트)", "③ 스트레스 퍼져있는 모양 비교 (박스 플롯)"],
+            "그려보고 싶은 차트 종류를 선택하세요:",
+            ["① 바 차트 (평균치 비교)", "② 박스 플롯 (분포의 범위 점검)", "③ 산점도 (두 변수의 움직임 흐름)", "④ 히스토그램 (데이터 수 집계)"],
             horizontal=True
         )
         
-        if "① 스마트폰 사용 시간" in chart_choice:
-            st.markdown("#### 📐 성적 그룹별 하루 평균 소셜미디어 사용 시간 분포")
-            fig_hist = px.histogram(
-                df, x="daily_social_media_hours", color="학업성취도 그룹",
-                title="상위권 vs 하위권 학생들의 하루 스마트폰 사용 시간대 분포",
-                labels={"daily_social_media_hours": "하루 평균 소셜미디어 사용량 (시간)"},
-                barmode="overlay", nbins=20, opacity=0.75,
-                color_discrete_sequence=["#2ECC71", "#E74C3C"] # 자연스러운 초록/빨강 배색
-            )
-            fig_hist.update_layout(template="plotly_white")
-            st.plotly_chart(fig_hist, use_container_width=True)
-            
-            st.info("""
-            **🧐 이 그래프를 읽는 방법:**
-            - 그래프 덩어리가 어느 쪽으로 치우쳐 있는지 봐주세요. 
-            - 하위권 학생들(빨간색 영역)의 중심축이 상위권 학생들(초록색 영역)보다 오른쪽으로 밀려나 있다면, '공부가 힘든 학생들이 실제로 소셜미디어를 더 오래 붙잡고 있다'는 사실을 직관적으로 확인하게 됩니다.
-            """)
-            
-        elif "② 성적별 평균 스트레스" in chart_choice:
-            st.markdown("#### 📊 성적 수준에 따른 평균 스트레스 격차")
-            
-            df_grouped = df.groupby("학업성취도 그룹")[["stress_level", "daily_social_media_hours"]].mean().reset_index()
+        # 차트 제목 자동 동적 생성
+        chart_title = f"'{x_axis}'와 '{y_axis}'의 관계" + (f" (기준: {color_target})" if color_var else "")
+        
+        if "① 바 차트" in chart_choice:
+            st.markdown(f"#### 📊 {chart_title}")
+            # 사용자가 어떤 변수를 고르든 안전하게 평균값으로 집계하여 바 차트 출력
+            group_keys = [x_axis]
+            if color_var and color_var != x_axis:
+                group_keys.append(color_var)
+                
+            df_bar = df.groupby(group_keys)[y_axis].mean().reset_index()
             
             fig_bar = px.bar(
-                df_grouped, x="학업성취도 그룹", y="stress_level",
-                title="상위권과 하위권 학생이 느끼는 평균 스트레스 레벨",
-                labels={"stress_level": "평균 스트레스 (높을수록 무겁고 힘듦)"},
-                color="학업성취도 그룹", color_discrete_sequence=["#2ECC71", "#E74C3C"]
+                df_bar, x=x_axis, y=y_axis, color=color_var,
+                title=f"{x_axis}별 평균 {y_axis} 수준 비교",
+                barmode="group",
+                template="plotly_white",
+                color_discrete_sequence=px.colors.qualitative.Safe
             )
-            fig_bar.update_layout(template="plotly_white")
             st.plotly_chart(fig_bar, use_container_width=True)
             
-            st.info("""
-            **🧐 이 그래프를 읽는 방법:**
-            - 복잡하게 계산할 것 없이 **빨간 막대와 초록 막대의 높이 차이**만 보시면 됩니다!
-            - 성적이 상대적으로 낮은 학생들이 평소 일상에서 스트레스 압박을 얼마나 더 강하게 받고 사는지 평균치로 깔끔하게 대조해 줍니다.
+            st.info(f"""
+            **🧐 이 바 차트 팁:**
+            - 지금 고르신 **{x_axis}**의 조건에 따라 **{y_axis}**의 평균치가 얼마나 높고 낮은지 막대의 높이로 바로 비교할 수 있습니다. 
+            - 집단 간의 '단순 평균 차이'를 누군가에게 설명할 때 가장 직관적이고 강력한 무기가 됩니다.
             """)
             
-        elif "③ 스트레스 퍼져있는 모양" in chart_choice:
-            st.markdown("#### 📦 성적 그룹별 스트레스 점수 분포 상황")
-            
+        elif "② 박스 플롯" in chart_choice:
+            st.markdown(f"#### 📦 {chart_title}")
             fig_box = px.box(
-                df, x="학업성취도 그룹", y="stress_level", color="학업성취도 그룹",
-                title="성적 그룹별 스트레스가 퍼져있는 범위",
-                labels={"stress_level": "스트레스 지수"},
-                color_discrete_sequence=["#2ECC71", "#E74C3C"]
+                df, x=x_axis, y=y_axis, color=color_var,
+                title=f"{x_axis}에 따른 {y_axis}의 세부 분포 범위",
+                template="plotly_white",
+                color_discrete_sequence=px.colors.qualitative.Safe
             )
-            fig_box.update_layout(template="plotly_white")
             st.plotly_chart(fig_box, use_container_width=True)
             
-            st.info("""
-            **🧐 이 그래프를 읽는 방법:**
-            - 가운데 굵은 선은 딱 중간에 위치한 학생의 점수이고, 상자의 크기는 아이들이 주로 몰려있는 점수대입니다.
-            - 하위권 상자가 상위권보다 위쪽으로 쏠려있거나 넓게 퍼져 있다면, 성적이 떨어질수록 정서적으로 극심한 스트레스를 겪는 '고위험군' 아이들이 그만큼 많다는 경고 신호로 해석할 수 있습니다.
+            st.info(f"""
+            **🧐 이 박스 플롯 팁:**
+            - 단순 평균값 하나만 보면 집단 내부의 사정을 놓치기 쉽습니다. 
+            - 이 상자 그림은 **{x_axis}** 그룹 안에서 **{y_axis}** 점수가 위아래로 얼마나 넓게 퍼져 있는지(최고점, 최저점, 중간에 몰린 범위)를 보여주므로 고위험군이나 특이 집단을 찾아내기 좋습니다.
+            """)
+            
+        elif "③ 산점도" in chart_choice:
+            st.markdown(f"#### ✨ {chart_title}")
+            fig_scatter = px.scatter(
+                df, x=x_axis, y=y_axis, color=color_var,
+                title=f"{x_axis} 변화에 따른 {y_axis}의 실제 데이터 분포",
+                opacity=0.7,
+                template="plotly_white",
+                color_discrete_sequence=px.colors.qualitative.Safe
+            )
+            st.plotly_chart(fig_scatter, use_container_width=True)
+            
+            st.info(f"""
+            **🧐 이 산점도 팁:**
+            - 흩뿌려진 점들이 오른쪽 위를 향해 올라가는 흐름인지, 반대로 내려가는 흐름인지 보세요.
+            - **{x_axis}**가 늘어날 때 **{y_axis}**도 덩달아 증가하는 성향이 있는지, 아니면 아무런 규칙 없이 둥글게 뭉쳐있는지 한눈에 훑어볼 수 있습니다.
+            """)
+            
+        elif "④ 히스토그램" in chart_choice:
+            st.markdown(f"#### 📐 {x_axis} 데이터의 빈도 빈도수 분포")
+            fig_hist = px.histogram(
+                df, x=x_axis, color=color_var,
+                title=f"선택한 {x_axis} 데이터의 덩어리 분포 상황",
+                barmode="overlay",
+                opacity=0.75,
+                template="plotly_white",
+                color_discrete_sequence=px.colors.qualitative.Safe
+            )
+            st.plotly_chart(fig_hist, use_container_width=True)
+            
+            st.info(f"""
+            **🧐 이 히스토그램 팁:**
+            - Y축은 사용자가 따로 고른 변수와 상관없이, 현재 X축에 놓인 **{x_axis}** 데이터에 해당하는 학생이 몇 명이나 존재하느냐(빈도수)를 보여줍니다.
+            - 우리 학생들이 주로 어떤 시간대나 점수대에 가장 많이 몰려 분포해 있는지 지형을 파악하기 좋습니다.
             """)
 
     # ----------------------------------------------------------------
-    # TAB 2: 얽히고설킨 관계 찾기 (Scatter, Heatmap)
+    # TAB 2: 전체 수치형 변수들 간의 연관성 지도 (Heatmap)
     # ----------------------------------------------------------------
     with tab2:
-        st.subheader("2. 시간, 성적, 스트레스의 복잡한 실타래 풀기")
+        st.subheader("2. 어떤 변수들끼리 친하고 원수지간일까? (전체 조망)")
+        st.markdown("데이터셋에 들어있는 수치 항목들을 한자리에 모아 서로의 밀접도를 격자판 지도로 확인합니다.")
         
-        st.markdown("#### ✨ 소셜미디어를 오래 할수록 스트레스 점수도 같이 올라갈까?")
-        
-        fig_scatter = px.scatter(
-            df, x="daily_social_media_hours", y="stress_level", color="학업성취도 그룹",
-            title="스마트폰 사용 시간과 스트레스의 직접적인 상관관계",
-            labels={"daily_social_media_hours": "하루 스마트폰 사용 시간 (시간)", "stress_level": "스트레스 지수"},
-            opacity=0.6, color_discrete_sequence=["#2ECC71", "#E74C3C"]
-        )
-        fig_scatter.update_layout(template="plotly_white")
-        st.plotly_chart(fig_scatter, use_container_width=True)
-        
-        st.info("""
-        **🧐 이 그래프를 읽는 방법:**
-        - 무수히 찍힌 점들이 전체적으로 '우상향(오른쪽 위로 올라가는 모양)'을 그리는지 봐주세요.
-        - 만약 오른쪽 위에 **하위권 학생들의 빨간 점**들이 빽빽하게 몰려 있다면, '성적도 낮은데 스마트폰도 엄청 많이 하고, 스트레스도 턱밑까지 차오른 위험한 상황'인 아이들의 비중을 눈으로 파악할 수 있습니다.
-        """)
-        
-        st.markdown("---")
-        
-        st.markdown("#### 🔥 핵심 요인들만 모아놓은 연관성 매트릭스")
-        st.markdown("아이들의 마음과 관련된 핵심 항목들(스마트폰 시간, 성적, 스트레스, 불안감, 우울감, 수면)만 콕 집어서 서로 얼마나 끈끈하게 연결되어 있는지 확인해 봅니다.")
-        
-        target_cols = ["daily_social_media_hours", "academic_performance", "stress_level", "anxiety_level", "depression_label", "sleep_hours"]
-        filtered_numeric_df = df[target_cols]
-        corr_matrix = filtered_numeric_df.corr()
+        numeric_df = df.select_dtypes(include=['number'])
+        corr_matrix = numeric_df.corr()
         
         fig_heatmap = px.imshow(
             corr_matrix,
@@ -136,40 +157,34 @@ if os.path.exists(data_path):
             aspect="auto",
             color_continuous_scale="RdBu_r",
             zmin=-1.0, zmax=1.0,
-            title="🎯 청소년 마음 건강 연관성 지도"
+            title="🧠 청소년 마음 및 행동 변수 간 전체 상관관계 격차판"
         )
         st.plotly_chart(fig_heatmap, use_container_width=True)
         
         st.info("""
-        **🧐 이 그래프를 읽는 방법:**
-        - 숫자가 1이나 -1에 가까울수록 아주 강하게 엮여있다는 뜻입니다. (붉은색은 긍정적/부정적이든 같이 커지는 관계, 푸른색은 하나가 커지면 하나가 작어지는 엇갈린 관계)
-        - 소셜미디어(`daily_social_media_hours`) 칸과 스트레스(`stress_level`) 칸이 만나는 곳의 숫자를 확인하면 둘 사이에 실제로 얼마나 밀접한 관련이 있는지 답이 나옵니다.
+        **🧐 이 히트맵 지도를 읽는 방법:**
+        - **+1(진한 빨간색)**에 가까울수록 "A가 커질 때 B도 무조건 커지는 동맹 관계"입니다.
+        - **-1(진한 푸른색)**에 가까울수록 "A가 커지면 B는 반대로 뚝 떨어지는 가위바위보 반대 관계"입니다.
+        - 수많은 변수를 하나씩 그래프로 그려 대조할 필요 없이, 이 지도 한 장이면 가장 밀접하게 연결된 단짝 변수쌍을 3초 만에 찾아낼 수 있습니다.
         """)
 
     # ----------------------------------------------------------------
-    # TAB 3: 종합 결론 및 추천 차트 (결론)
+    # TAB 3: 분석가가 추천하는 '가장 직관적인 최고의 차트'
     # ----------------------------------------------------------------
     with tab3:
-        st.markdown("### 👨‍💻 데이터 분석가가 직접 내린 결론")
+        st.subheader("🎯 분석가가 전하는 '가장 보기 편한 차트' 선택 가이드")
         
         st.success("""
-        #### 🏆 보고서나 대중 설명용으로 '딱 하나'만 골라야 한다면?
-        **👉 제 선택은 '② 성적별 평균 스트레스 비교 (바 차트)' 입니다.**
-
-        * **진짜 사람의 시선에서 본 이유:** 산점도나 히스토그램은 가만히 들여다보고 해석하는 재미는 있지만, 통계가 낯선 학부모님이나 대중들이 보면 "점들이 너무 많아서 뭐가 뭔지 모르겠다"며 피로감을 느끼기 십상입니다.
-          반면, **바 차트는 상위권과 하위권 아이들의 스트레스 차이를 단 두 개의 막대 높낮이로 극명하게 대조**해 줍니다. "성적이 낮은 아이들이 이만큼이나 더 힘들어하고 있습니다!"라는 메시지를 직관적이고 강력하게 전달하기에는 바 차트가 최고입니다.
-          거기에 연관성을 숫자로 딱 정리해 주는 **히트맵**을 곁들이면 깔끔한 보고서가 완성됩니다.
-        """)
+        #### 🏆 모든 차트 중 직관성 1위는? 👉 단연 '① 바 차트 (Bar Chart)'와 '🔥 히트맵 (Heatmap)'입니다!
         
-        st.markdown("#### 📝 처음에 던졌던 의문들에 대한 최종 답변")
-        st.info("""
-        1. **소셜미디어를 많이 쓰면 스트레스가 정말 심해질까?**
-           - 데이터를 열어보니 예상외로 스마트폰 사용 시간 자체가 스트레스를 정비례로 폭발시키는 주범은 아니었습니다. (상관계수 0.03으로 둘은 거의 따로 놉니다.) 즉, 스마트폰 자체를 많이 만진다고 무조건 스트레스가 극에 달하는 것은 아닙니다.
+        **💡 왜 그렇게 생각하나요?**
+        1. **바 차트(Bar)가 최고인 이유:** 산점도(Scatter)는 무수한 점들의 잔상이 남고, 박스 플롯(Box)은 통계 기호(사분위수, 수염)의 개념을 모르면 시선이 분산됩니다. 반면 **바 차트는 그냥 '막대의 높이' 그 자체가 데이터의 크기**를 뜻합니다. 초등학생이 보더라도 "이쪽 막대가 더 높으니 여기가 평균 점수가 더 크구나!"라고 즉각 이해할 수 있어서 대중적인 보고용으로 최고의 효율을 자랑합니다.
            
-        2. **성적이 낮은 학생이 매체를 많이 쓰면 스트레스가 더 심해질까?**
-           - **하지만 '숨겨진 고리'가 있었습니다.** 히트맵을 자세히 보면 우울감이나 스트레스 지수는 수면 부족(-0.19)과 깊은 연관이 있습니다.
-           - 결론적으로, 성적이 낮은 학생이 스마트폰이나 SNS를 자제하지 못해 '밤늦게까지 잠을 자지 않는 단계'로 이어질 때 스트레스와 우울감이 도미노처럼 악화될 위험이 큽니다. 매체 사용 시간 그 자체보다는 '수면을 방해하는 스마트폰 습관'을 바로잡아 주는 것이 핵심 솔루션입니다.
+        2. **히트맵(Heatmap)이 최고인 이유:** 여러 변수들의 관계를 파악하기 위해 수십 개의 산점도를 띄워두고 비교하는 번거로움을 **색상 톤(Tone)과 숫자 1장**으로 압축 요약해 버립니다. 전체 데이터의 숲을 먼저 파악하는 데 이보다 효율적인 차트는 없습니다.
+           
+        **⚙️ 추천하는 EDA 탐색 루틴:**
+        - **Step 1:** 우선 `TAB 2`로 가서 히트맵 지도를 보고 숫자가 큰 핵심 변수 커플들을 눈으로 찜합니다.
+        - **Step 2:** `TAB 1`로 돌아와 X축과 Y축에 그 변수들을 넣고 `바 차트`나 `박스 플롯`으로 가볍고 명확하게 집단 비교를 완료합니다.
         """)
-
 else:
-    st.error("❌ 데이터셋 파일('Teen_Mental_Health_Dataset.csv')을 찾을 수 없습니다. 경로를 다시 한번 체크해 주세요.")
+    st.error("❌ 'Teen_Mental_Health_Dataset.csv' 파일을 불러올 수 없습니다. 경로를 확인해 주세요.")
