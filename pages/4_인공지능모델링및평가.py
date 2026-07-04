@@ -7,134 +7,167 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
-st.title("🤖 4. 인공지능 모델링 및 평가")
-st.markdown("다양한 AI 모델을 학습시켜 성능을 비교하고, 가장 우수한 모델을 선택해 청소년의 **스트레스 지수(1~10)**를 예측합니다.")
+st.set_page_config(layout="wide") # 다양한 그래프를 넓게 보기 위해 와이드 레이아웃 적용
 
-# 1. 사이드바 조절 기능 (실험 환경 구축)
-st.sidebar.header("🛠️ AI 모델 하이퍼파라미터 설정")
+st.title("🤖 4. 인공지능 모델링 및 시각화 평가")
+st.markdown("다양한 AI 모델과 수치를 직접 조절하며, 모델의 내부 동작과 평가 결과를 다양한 시각적 그래프로 확인해 보세요.")
+
+# -----------------------------------------------------
+# 1. 사이드바 제어판 (모델 선택 및 하이퍼파라미터 조절)
+# -----------------------------------------------------
+st.sidebar.header("🛠️ AI 실험실 설정")
+
+# 사용자가 직접 예측에 사용할 메인 모델 선택
+selected_model_name = st.sidebar.selectbox(
+    "실시간 예측에 사용할 AI 모델 선택", 
+    ["Random Forest", "Decision Tree", "Logistic Regression"]
+)
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("⚙️ 모델별 세부 수치(하이퍼파라미터) 조절")
 rf_trees = st.sidebar.slider("랜덤 포레스트 나무 개수 (n_estimators)", 10, 200, 100, step=10)
 dt_depth = st.sidebar.slider("의사결정나무 최대 깊이 (max_depth)", 3, 15, 7)
+lr_c = st.sidebar.slider("로지스틱 규제 강도 (C값 - 클수록 규제 약함)", 0.01, 10.0, 1.0, step=0.1)
 
-# 2. 데이터 로드 및 여러 모델 학습/평가 (캐싱 적용)
+# -----------------------------------------------------
+# 2. 데이터 학습 및 전체 모델 평가 데이터 생성 (캐싱)
+# -----------------------------------------------------
 @st.cache_data
-def train_and_compare_models(trees, depth):
-    # 데이터 불러오기
+def train_and_evaluate(trees, depth, c_val):
     df = pd.read_csv("Teen_Mental_Health_Dataset.csv")
     
-    # 독립변수(Features)와 종속변수(Target) 설정
     features = ['daily_social_media_hours', 'sleep_hours', 'screen_time_before_sleep', 'physical_activity']
     target = 'stress_level'
     
     X = df[features]
     y = df[target]
     
-    # 데이터 분할 (80% 학습, 20% 검증)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     
-    # 비교할 3가지 모델 정의
+    # 사용자가 조절한 하이퍼파라미터 주입
     models = {
-        "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
+        "Logistic Regression": LogisticRegression(C=c_val, max_iter=1000, random_state=42),
         "Decision Tree": DecisionTreeClassifier(max_depth=depth, random_state=42),
         "Random Forest": RandomForestClassifier(n_estimators=trees, random_state=42)
     }
     
     model_results = {}
-    best_model_name = None
-    best_f1 = -1
     
-    # 각 모델별 학습 및 평가
     for name, model in models.items():
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         
         acc = accuracy_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
+        cm = confusion_matrix(y_test, y_pred)
         
         model_results[name] = {
             "model": model,
             "accuracy": acc,
-            "f1_score": f1
+            "f1_score": f1,
+            "confusion_matrix": cm,
+            "y_test": y_test,
+            "y_pred": y_pred
         }
         
-        # F1-Score 기준으로 가장 우수한 모델 선정
-        if f1 > best_f1:
-            best_f1 = f1
-            best_model_name = name
+    return model_results, features, X_test
 
-    return model_results, best_model_name, features
-
-# 모델 학습 실행
 try:
-    results, best_name, feature_names = train_and_compare_models(rf_trees, dt_depth)
+    results, feature_names, X_test_df = train_and_evaluate(rf_trees, dt_depth, lr_c)
     data_loaded = True
 except FileNotFoundError:
-    st.error("파일을 찾을 수 없습니다. 'Teen_Mental_Health_Dataset.csv' 파일이 올바른 경로에 있는지 확인해주세요.")
+    st.error("데이터 파일을 찾을 수 없습니다. 경로를 확인해주세요.")
     data_loaded = False
 
 if data_loaded:
-    st.markdown("---")
-    st.subheader("📊 AI 모델별 성능 비교")
-    st.markdown("스트레스 지수를 예측하기 위해 3가지 알고리즘을 학습시킨 결과입니다.")
-
-    # 표(DataFrame) 형태로 출력
-    summary_data = []
-    for name, info in results.items():
-        summary_data.append({
-            "AI 모델 이름": name,
-            "정확도 (Accuracy)": f"{info['accuracy']*100:.1f}%",
-            "F1-Score (Macro)": f"{info['f1_score']:.2f}"
-        })
-    st.table(pd.DataFrame(summary_data))
-
-    # 최적 모델 결과 강조
-    st.success(f"🏆 **선택된 최적의 모델:** `{best_name}` (F1-Score가 가장 높아 최종 예측기로 채택되었습니다.)")
-
-    # 모델 상세 설명 (접어두기)
-    with st.expander("ℹ️ 학습된 AI 모델 알고리즘 설명 보기"):
-        st.markdown("""
-        * **로지스틱 회귀 (Logistic Regression)**
-            * 데이터 간의 선형적인 관계를 확률로 계산하여 분류하는 알고리즘입니다. 빠른 연산이 장점입니다.
-        * **의사결정나무 (Decision Tree)**
-            * 스무고개처럼 조건문 분기를 생성하여 데이터를 쪼개나가는 알고리즘입니다. 직관적이지만 깊어질수록 과적합의 위험이 있습니다.
-        * **랜덤 포레스트 (Random Forest)**
-            * 수많은 의사결정나무를 만들고 투표(다수결)를 통해 최종 예측을 수행하는 강력한 앙상블 모델입니다.
-        """)
-
-    # 3. 피처 중요도(Feature Importance) 시각화 섹션
-    st.markdown("---")
-    st.subheader("🔑 무엇이 청소년 스트레스에 가장 큰 영향을 줄까요?")
-    st.markdown("최적 모델이 청소년의 스트레스를 분석할 때 가장 주목한 생활 패턴 요소 순위입니다.")
+    # -----------------------------------------------------
+    # 3. 다양한 시각화 대시보드 배치 (2x2 구조)
+    # -----------------------------------------------------
+    st.subheader("📊 실시간 변동 데이터 시각화 리포트")
+    st.markdown("왼쪽 제어판에서 수치를 바꾸면 아래 그래프들이 실시간으로 다시 그려집니다.")
     
-    best_model = results[best_name]["model"]
+    # 레이아웃을 위한 2개의 행(Row)과 각 2개의 열(Column) 구성
+    row1_col1, row1_col2 = st.columns(2)
+    row2_col1, row2_col2 = st.columns(2)
     
-    # 트리 기반 모델인 경우 피처 중요도 그리기
-    if hasattr(best_model, 'feature_importances_'):
-        importances = best_model.feature_importances_
-        indices = np.argsort(importances)[::-1]
+    # --- [그래프 1] 세 모델의 성능 비교 바 차트 ---
+    with row1_col1:
+        st.markdown("##### ① AI 모델별 성능 지표 비교")
+        names = list(results.keys())
+        accs = [results[n]["accuracy"] for n in names]
+        f1s = [results[n]["f1_score"] for n in names]
         
-        # 그래프 한글 깨짐을 방지하기 위해 영문 표기 사용
-        feature_labels = {
-            'daily_social_media_hours': 'SNS Usage (Hours)',
-            'sleep_hours': 'Sleep (Hours)',
-            'screen_time_before_sleep': 'Screen Time Before Sleep',
-            'physical_activity': 'Physical Activity'
-        }
-        plot_labels = [feature_labels[feature_names[i]] for i in indices]
+        fig1, ax1 = plt.subplots(figsize=(6, 4))
+        x = np.arange(len(names))
+        width = 0.35
         
-        # Matplotlib & Seaborn 그래프 그리기
-        fig, ax = plt.subplots(figsize=(7, 3.5))
-        sns.barplot(x=importances[indices], y=plot_labels, ax=ax, palette="viridis")
-        ax.set_xlabel("Importance Score")
-        st.pyplot(fig)
-    else:
-        st.info("선택된 모델(Logistic Regression)은 선형 계수 기반 모델이므로 트리 방식의 중요도 그래프 대신 수식 가중치로 분석을 진행합니다.")
+        ax1.bar(x - width/2, accs, width, label='Accuracy', color='#4e79a7')
+        ax1.bar(x + width/2, f1s, width, label='F1-Score', color='#f28e2b')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(names)
+        ax1.set_ylim(0, 1.0)
+        ax1.legend()
+        st.pyplot(fig1)
+        st.caption("세 알고리즘의 정확도와 전체 균형 점수(F1)를 직접 비교합니다.")
 
-    # 4. 실시간 스트레스 지수 예측기
+    # --- [그래프 2] 선택된 모델의 피처 중요도 차트 ---
+    with row1_col2:
+        st.markdown(f"##### ② {selected_model_name}의 핵심 영향 요인")
+        current_model = results[selected_model_name]["model"]
+        
+        fig2, ax2 = plt.subplots(figsize=(6, 4))
+        feature_labels_eng = ['SNS Hours', 'Sleep Hours', 'Screen Before Sleep', 'Physical Activity']
+        
+        if hasattr(current_model, 'feature_importances_'):
+            importances = current_model.feature_importances_
+            sns.barplot(x=importances, y=feature_labels_eng, ax=ax2, palette="crest")
+            ax2.set_xlabel("Importance")
+        elif hasattr(current_model, 'coef_'):
+            # 로지스틱 회귀의 경우 계수(coefficients)의 절대값을 중요도로 시각화
+            importances = np.abs(current_model.coef_[0])[:4] 
+            sns.barplot(x=importances, y=feature_labels_eng, ax=ax2, palette="flare")
+            ax2.set_xlabel("Absolute Coefficient")
+        
+        st.pyplot(fig2)
+        st.caption("선택한 모델이 스트레스를 판단할 때 가장 중요하게 체크한 요소입니다.")
+
+    # --- [그래프 3] 실제값 vs AI 예측값 분포 차트 ---
+    with row2_col1:
+        st.markdown(f"##### ③ {selected_model_name}의 예측 트렌드 분석")
+        y_true = results[selected_model_name]["y_test"]
+        y_pred = results[selected_model_name]["y_pred"]
+        
+        fig3, ax3 = plt.subplots(figsize=(6, 4))
+        # 수면시간 대비 스트레스 지수 분포 위에 예측 경향을 산점도로 시각화
+        sns.scatterplot(x=X_test_df['sleep_hours'], y=y_true, alpha=0.5, label='Actual Data', color='gray', ax=ax3)
+        sns.lineplot(x=X_test_df['sleep_hours'], y=y_pred, color='red', marker='o', label='AI Predict Trend', ax=ax3, errorbar=None)
+        ax3.set_xlabel("Sleep Hours")
+        ax3.set_ylabel("Stress Level (1~10)")
+        ax3.legend()
+        st.pyplot(fig3)
+        st.caption("실제 데이터의 분포(회색) 대비 AI가 수면시간별로 스트레스를 어떻게 예측(빨간선)하는지 트렌드를 보여줍니다.")
+
+    # --- [그래프 4] 혼동 행렬(Confusion Matrix) 히트맵 ---
+    with row2_col2:
+        st.markdown(f"##### ④ {selected_model_name} 혼동 행렬 (오답 격자판)")
+        cm = results[selected_model_name]["confusion_matrix"]
+        
+        fig4, ax4 = plt.subplots(figsize=(6, 4))
+        # 데이터가 깔끔하게 보이도록 상위 몇 개 클래스 위주 혹은 전체 격자 히트맵 시각화
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4)
+        ax4.set_xlabel("Predicted Label")
+        ax4.set_ylabel("True Label")
+        st.pyplot(fig4)
+        st.caption("대각선 방향에 숫자가 몰려있을수록 AI가 오답 없이 정확하게 분류해냈음을 의미합니다.")
+
+    # -----------------------------------------------------
+    # 4. 실시간 스트레스 지수 예측기 (선택된 모델 활용)
+    # -----------------------------------------------------
     st.markdown("---")
-    st.subheader(f"🔮 실시간 스트레스 지수 예측기 (최적 모델: {best_name})")
-    st.markdown("아래 정보를 입력하면 선정된 최적의 AI 모델이 스트레스 레벨(1~10)을 예측합니다.")
+    st.subheader(f"🔮 실시간 스트레스 지수 예측기 (선택된 모델: {selected_model_name})")
+    st.markdown("선택 및 수치 튜닝이 완료된 최적의 모델을 가지고 실제 청소년의 생활 속 스트레스를 시뮬레이션합니다.")
 
     predict_col1, predict_col2 = st.columns(2)
 
@@ -148,16 +181,13 @@ if data_loaded:
 
     if st.button("🧠 AI 스트레스 예측 결과 보기"):
         input_data = np.array([[sns_hours, sleep_hours, screen_time_before_sleep, exercise_hours]])
-        predicted_stress = best_model.predict(input_data)[0]
+        active_model = results[selected_model_name]["model"]
+        predicted_stress = active_model.predict(input_data)[0]
         
         st.markdown("### 🎯 AI 예측 결과")
-        
         if predicted_stress >= 8:
             st.error(f"🚨 **위험 수준: 높음 (예측 스트레스 지수: {predicted_stress} / 10)**")
-            st.markdown("AI 분석 결과 스트레스 수치가 매우 높게 예측되었습니다. 충분한 수면을 취하고 전자기기 사용을 줄이는 등의 관리가 필요합니다.")
         elif predicted_stress >= 4:
             st.warning(f"⚠️ **위험 수준: 보통 (예측 스트레스 지수: {predicted_stress} / 10)**")
-            st.markdown("적당한 수준의 스트레스를 겪고 있습니다. 누적되지 않도록 취미나 가벼운 운동으로 환기해 주세요.")
         else:
             st.success(f"✅ **위험 수준: 낮음 (예측 스트레스 지수: {predicted_stress} / 10)**")
-            st.markdown("스트레스 지수가 아주 안정적입니다! 현재의 건강한 생활 패턴을 잘 유지해 주세요.")
