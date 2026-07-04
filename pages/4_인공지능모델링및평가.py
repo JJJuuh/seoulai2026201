@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
@@ -10,9 +12,14 @@ from sklearn.metrics import accuracy_score, f1_score
 st.title("🤖 4. 인공지능 모델링 및 평가")
 st.markdown("다양한 AI 모델을 학습시켜 성능을 비교하고, 가장 우수한 모델을 선택해 청소년의 **스트레스 지수(1~10)**를 예측합니다.")
 
-# 1. 데이터 로드 및 여러 모델 학습/평가 (캐싱 적용)
+# 1. 사이드바 조절 기능 (실험 환경 구축)
+st.sidebar.header("🛠️ AI 모델 하이퍼파라미터 설정")
+rf_trees = st.sidebar.slider("랜덤 포레스트 나무 개수 (n_estimators)", 10, 200, 100, step=10)
+dt_depth = st.sidebar.slider("의사결정나무 최대 깊이 (max_depth)", 3, 15, 7)
+
+# 2. 데이터 로드 및 여러 모델 학습/평가 (캐싱 적용)
 @st.cache_data
-def train_and_compare_models():
+def train_and_compare_models(trees, depth):
     # 데이터 불러오기
     df = pd.read_csv("Teen_Mental_Health_Dataset.csv")
     
@@ -29,8 +36,8 @@ def train_and_compare_models():
     # 비교할 3가지 모델 정의
     models = {
         "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
-        "Decision Tree": DecisionTreeClassifier(random_state=42),
-        "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42)
+        "Decision Tree": DecisionTreeClassifier(max_depth=depth, random_state=42),
+        "Random Forest": RandomForestClassifier(n_estimators=trees, random_state=42)
     }
     
     model_results = {}
@@ -60,7 +67,7 @@ def train_and_compare_models():
 
 # 모델 학습 실행
 try:
-    results, best_name, feature_names = train_and_compare_models()
+    results, best_name, feature_names = train_and_compare_models(rf_trees, dt_depth)
     data_loaded = True
 except FileNotFoundError:
     st.error("파일을 찾을 수 없습니다. 'Teen_Mental_Health_Dataset.csv' 파일이 올바른 경로에 있는지 확인해주세요.")
@@ -69,9 +76,9 @@ except FileNotFoundError:
 if data_loaded:
     st.markdown("---")
     st.subheader("📊 AI 모델별 성능 비교")
-    st.markdown("스트레스 지수를 예측하기 위해 3가지 알고리즘을 학습시킨 결과입니다. (정밀한 평가를 위해 데이터 불균형을 고려한 F1-Score를 기준으로 비교합니다.)")
+    st.markdown("스트레스 지수를 예측하기 위해 3가지 알고리즘을 학습시킨 결과입니다.")
 
-    # 표(DataFrame) 형태로 보기 쉽게 출력
+    # 표(DataFrame) 형태로 출력
     summary_data = []
     for name, info in results.items():
         summary_data.append({
@@ -81,25 +88,54 @@ if data_loaded:
         })
     st.table(pd.DataFrame(summary_data))
 
-    # 최적 모델 안내 보기
+    # 최적 모델 결과 강조
     st.success(f"🏆 **선택된 최적의 모델:** `{best_name}` (F1-Score가 가장 높아 최종 예측기로 채택되었습니다.)")
 
-    # 모델 상세 설명 (접어두기 기능 활용)
+    # 모델 상세 설명 (접어두기)
     with st.expander("ℹ️ 학습된 AI 모델 알고리즘 설명 보기"):
         st.markdown("""
         * **로지스틱 회귀 (Logistic Regression)**
-            * 입력 데이터와 출력 클래스 간의 선형적인 관계를 확률로 계산하는 모델입니다. 계산이 빠르고 직관적이지만, 복잡한 패턴을 잡기엔 한계가 있습니다.
+            * 데이터 간의 선형적인 관계를 확률로 계산하여 분류하는 알고리즘입니다. 빠른 연산이 장점입니다.
         * **의사결정나무 (Decision Tree)**
-            * '수면 시간이 5시간 미만인가?'와 같이 스무고개처럼 데이터를 조건에 따라 가지치기하며 분류하는 모델입니다. 직관적이지만 과적합(오버피팅)되기 쉽습니다.
+            * 스무고개처럼 조건문 분기를 생성하여 데이터를 쪼개나가는 알고리즘입니다. 직관적이지만 깊어질수록 과적합의 위험이 있습니다.
         * **랜덤 포레스트 (Random Forest)**
-            * 여러 개의 의사결정나무를 만들어서 투표(앙상블)를 통해 최종 결론을 내는 모델입니다. 나무 하나보다 훨씬 똑똑하고 과적합을 잘 예방하여 일반적으로 성능이 우수합니다.
+            * 수많은 의사결정나무를 만들고 투표(다수결)를 통해 최종 예측을 수행하는 강력한 앙상블 모델입니다.
         """)
 
+    # 3. 피처 중요도(Feature Importance) 시각화 섹션
+    st.markdown("---")
+    st.subheader("🔑 무엇이 청소년 스트레스에 가장 큰 영향을 줄까요?")
+    st.markdown("최적 모델이 청소년의 스트레스를 분석할 때 가장 주목한 생활 패턴 요소 순위입니다.")
+    
+    best_model = results[best_name]["model"]
+    
+    # 트리 기반 모델인 경우 피처 중요도 그리기
+    if hasattr(best_model, 'feature_importances_'):
+        importances = best_model.feature_importances_
+        indices = np.argsort(importances)[::-1]
+        
+        # 그래프 한글 깨짐을 방지하기 위해 영문 표기 사용
+        feature_labels = {
+            'daily_social_media_hours': 'SNS Usage (Hours)',
+            'sleep_hours': 'Sleep (Hours)',
+            'screen_time_before_sleep': 'Screen Time Before Sleep',
+            'physical_activity': 'Physical Activity'
+        }
+        plot_labels = [feature_labels[feature_names[i]] for i in indices]
+        
+        # Matplotlib & Seaborn 그래프 그리기
+        fig, ax = plt.subplots(figsize=(7, 3.5))
+        sns.barplot(x=importances[indices], y=plot_labels, ax=ax, palette="viridis")
+        ax.set_xlabel("Importance Score")
+        st.pyplot(fig)
+    else:
+        st.info("선택된 모델(Logistic Regression)은 선형 계수 기반 모델이므로 트리 방식의 중요도 그래프 대신 수식 가중치로 분석을 진행합니다.")
+
+    # 4. 실시간 스트레스 지수 예측기
     st.markdown("---")
     st.subheader(f"🔮 실시간 스트레스 지수 예측기 (최적 모델: {best_name})")
     st.markdown("아래 정보를 입력하면 선정된 최적의 AI 모델이 스트레스 레벨(1~10)을 예측합니다.")
 
-    # 입력 폼
     predict_col1, predict_col2 = st.columns(2)
 
     with predict_col1:
@@ -112,9 +148,6 @@ if data_loaded:
 
     if st.button("🧠 AI 스트레스 예측 결과 보기"):
         input_data = np.array([[sns_hours, sleep_hours, screen_time_before_sleep, exercise_hours]])
-        
-        # 선택된 최적의 모델을 가져와서 예측 수행
-        best_model = results[best_name]["model"]
         predicted_stress = best_model.predict(input_data)[0]
         
         st.markdown("### 🎯 AI 예측 결과")
