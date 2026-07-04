@@ -9,13 +9,13 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
-st.set_page_config(layout="wide") # 화면을 넓게 쓰기 위한 설정
+st.set_page_config(layout="wide") 
 
 st.title("🤖 4. 인공지능 모델링 및 평가 대시보드")
 st.markdown("다양한 AI 모델과 수치를 조절하며 모델의 성능과 생활 패턴 분석 결과를 확인해 보세요.")
 
 # -----------------------------------------------------
-# 1. 화면 중간/상단 가로 제어판 (사이드바 제거)
+# 1. 화면 중간/상단 가로 제어판
 # -----------------------------------------------------
 st.markdown("### 🛠️ AI 실험실 설정 제어판")
 control_col1, control_col2, control_col3, control_col4 = st.columns(4)
@@ -89,14 +89,12 @@ if data_loaded:
     st.subheader("📊 실시간 분석 결과 리포트")
     
     # -----------------------------------------------------
-    # 3. 탭 기능을 활용한 그래프 종류별 창 구분 및 배경 제거
+    # 3. 탭 구성 및 배경 제거 그래프
     # -----------------------------------------------------
-    # 그래프 스타일을 격자 없는 깔끔한 흰색 배경으로 통일
     sns.set_style("white")
     plt.rcParams['axes.facecolor'] = 'none'
     plt.rcParams['figure.facecolor'] = 'none'
 
-    # 4개의 탭 생성
     tab1, tab2, tab3, tab4 = st.tabs([
         "🥇 모델별 성능 비교", 
         "🔑 핵심 영향 요인 분석", 
@@ -104,7 +102,6 @@ if data_loaded:
         "🔲 혼동 행렬 격자 점검"
     ])
     
-    # --- [탭 1] 세 모델의 성능 비교 그래프 ---
     with tab1:
         st.markdown("##### AI 모델별 성능 지표 비교 그래프")
         names = list(results.keys())
@@ -121,15 +118,13 @@ if data_loaded:
         ax1.set_xticklabels(names)
         ax1.set_ylim(0, 1.0)
         ax1.legend()
-        ax1.grid(False) # 배경 격자 제거
-        sns.despine()   # 그래프 테두리 깔끔하게 정리
+        ax1.grid(False)
+        sns.despine()
         st.pyplot(fig1)
 
-    # --- [탭 2] 핵심 영향 요인 그래프 ---
     with tab2:
         st.markdown(f"##### {selected_model_name}의 핵심 영향 요인 분석 그래프")
         current_model = results[selected_model_name]["model"]
-        
         fig2, ax2 = plt.subplots(figsize=(8, 4))
         feature_labels_eng = ['SNS Hours', 'Sleep Hours', 'Screen Before Sleep', 'Physical Activity']
         
@@ -145,7 +140,6 @@ if data_loaded:
         sns.despine()
         st.pyplot(fig2)
 
-    # --- [탭 3] 예측 경향성 그래프 ---
     with tab3:
         st.markdown(f"##### {selected_model_name}의 수면시간별 예측 경향 그래프")
         y_true = results[selected_model_name]["y_test"]
@@ -161,11 +155,9 @@ if data_loaded:
         sns.despine()
         st.pyplot(fig3)
 
-    # --- [탭 4] 혼동 행렬 히트맵 그래프 ---
     with tab4:
         st.markdown(f"##### {selected_model_name} 혼동 행렬 격자 그래프")
         cm = results[selected_model_name]["confusion_matrix"]
-        
         fig4, ax4 = plt.subplots(figsize=(6, 4))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4)
         ax4.set_xlabel("Predicted Label")
@@ -173,7 +165,6 @@ if data_loaded:
         ax4.grid(False)
         st.pyplot(fig4)
 
-    # 하단 전체 스코어 보드 요약
     st.markdown("---")
     st.table(pd.DataFrame([
         {"AI 모델 이름": name, "정확도 (Accuracy)": f"{info['accuracy']*100:.1f}%", "F1-Score (Macro)": f"{info['f1_score']:.2f}"}
@@ -181,7 +172,9 @@ if data_loaded:
     ]))
     st.success(f"🏆 **예측에 시뮬레이션 중인 알고리즘:** `{selected_model_name}`")
 
-    # 4. 실시간 스트레스 지수 예측기
+    # -----------------------------------------------------
+    # 4. 실시간 스트레스 지수 예측기 및 종합 평가 리포트
+    # -----------------------------------------------------
     st.markdown("---")
     st.subheader(f"🔮 실시간 스트레스 지수 예측기 (선택된 모델: {selected_model_name})")
     st.markdown("수치 설정이 완료된 모델을 가지고 실제 청소년의 생활 속 스트레스를 예측합니다.")
@@ -201,10 +194,50 @@ if data_loaded:
         active_model = results[selected_model_name]["model"]
         predicted_stress = active_model.predict(input_data)[0]
         
-        st.markdown("### 🎯 AI 예측 결과")
+        st.markdown("---")
+        st.markdown("### 🎯 AI 종합 분석 결과 보고서")
+        
+        # 1단계: 스트레스 등급 판정
         if predicted_stress >= 8:
-            st.error(f"🚨 **위험 수준: 높음 (예측 스트레스 지수: {predicted_stress} / 10)**")
+            st.error(f"🚨 **위험 등급: 고위험군 (예측 스트레스 지수: {predicted_stress} / 10)**")
         elif predicted_stress >= 4:
-            st.warning(f"⚠️ **위험 수준: 보통 (예측 스트레스 지수: {predicted_stress} / 10)**")
+            st.warning(f"⚠️ **위험 등급: 주의군 (예측 스트레스 지수: {predicted_stress} / 10)**")
         else:
-            st.success(f"✅ **위험 수준: 낮음 (예측 스트레스 지수: {predicted_stress} / 10)**")
+            st.success(f"✅ **위험 등급: 안정군 (예측 스트레스 지수: {predicted_stress} / 10)**")
+            
+        # 2단계: 라이프스타일 지표 종합 피드백 생성 (룰 베이스 결합 요약)
+        st.markdown("#### 📝 입력 데이터 기반 맞춤형 생활 패턴 피드백")
+        
+        feedback_list = []
+        
+        if sleep_hours < 6.0:
+            feedback_list.append("❌ **심각한 수면 부족:** 하루 수면 시간이 6시간 미만으로, 신체 및 대뇌 회복이 정상적으로 이루어지지 않아 스트레스에 매우 취약한 상태를 유발하고 있습니다.")
+        elif sleep_hours >= 8.0:
+            feedback_list.append("👍 **적절한 수면:** 권장 수면 시간을 충족하고 있어 스트레스를 방어하는 좋은 기반이 됩니다.")
+            
+        if sns_hours >= 5.0:
+            feedback_list.append("❌ **과도한 SNS 이용:** 하루 5시간 이상의 SNS 사용은 타인과의 비교 심리를 자극하고 주의력을 분산시켜 정신적 피로도를 급격히 높일 수 있습니다.")
+            
+        if screen_time_before_sleep >= 2.0:
+            feedback_list.append("❌ **취침 전 스마트폰 중독 위험:** 잠들기 전 2시간 이상의 전자기기 노출은 멜라토닌 분비를 억제해 얕은 수면을 유발하고 스트레스 저항력을 떨어뜨립니다.")
+            
+        if exercise_hours < 0.5:
+            feedback_list.append("❌ **신체 활동 부족:** 하루 운동량이 30분 미만입니다. 가벼운 유산소 운동은 스트레스 호르몬인 코르티솔을 분해하므로 일상적 신체 활동을 늘려야 합니다.")
+        elif exercise_hours >= 1.0:
+            feedback_list.append("👍 **활발한 신체 활동:** 하루 1시간 이상의 규칙적인 운동이 스트레스 해소에 든든한 버팀목 역할을 해주고 있습니다.")
+            
+        # 피드백 리스트 출력
+        if feedback_list:
+            for item in feedback_list:
+                st.markdown(item)
+        else:
+            st.markdown("정상적이고 균형 잡힌 생활 패턴을 보이고 있습니다.")
+            
+        # 3단계: 종합 정리 및 조언
+        st.markdown("#### 💡 AI 마인드 케어 처방전")
+        if predicted_stress >= 8:
+            st.markdown(f"현재 AI 모델 분석 결과, 입력하신 생활 패턴은 청소년 고위험 스트레스 군의 전형적인 수치와 일치합니다. 특히 **수면 개선과 취침 전 전자기기 차단**이 가장 시급합니다. 혼자 고민하기보다는 학교 내 위클래스(Wee 클래스)나 청소년 상담 전화(1388)를 통해 대화를 나누어 보는 것을 적극 권장합니다.")
+        elif predicted_stress >= 4:
+            st.markdown(f"현재는 일상적인 스트레스를 겪고 있는 단계이지만, 불규칙한 생활 습관이 지속된다면 만성 피로나 무기력증으로 이어질 수 있습니다. 주말을 이용해 모바일 디톡스(SNS 끊기)를 실천하거나 운동 시간을 조금 더 확보하여 내면의 에너지를 충전해 주세요.")
+        else:
+            st.markdown(f"매우 모범적이고 건강한 라이프 사이클을 유지하고 있습니다! AI가 예측한 낮은 스트레스 지수는 우수한 수면 습관과 철저한 전자기기 절제력이 만들어낸 결과입니다. 지금처럼 자신만의 밸런스를 계속 유지해 나가시길 바랍니다.")
