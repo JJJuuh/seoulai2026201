@@ -36,7 +36,7 @@ with control_col4:
     lr_c = st.slider("로지스틱 규제 강도(C값)", 0.01, 10.0, 1.0, step=0.1)
 
 # -----------------------------------------------------
-# 2. 데이터 학습 및 평가 연산 (캐싱 적용)
+# 2. 데이터 학습 및 평가 연산 (과적합 진단을 위해 Train 스코어도 계산)
 # -----------------------------------------------------
 @st.cache_data
 def train_and_evaluate(trees, depth, c_val):
@@ -60,19 +60,24 @@ def train_and_evaluate(trees, depth, c_val):
     
     for name, model in models.items():
         model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
         
-        acc = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
-        cm = confusion_matrix(y_test, y_pred)
+        # 과적합 검증용 Train/Test 예측
+        y_train_pred = model.predict(X_train)
+        y_test_pred = model.predict(X_test)
+        
+        train_acc = accuracy_score(y_train, y_train_pred)
+        test_acc = accuracy_score(y_test, y_test_pred)
+        f1 = f1_score(y_test, y_test_pred, average='macro', zero_division=0)
+        cm = confusion_matrix(y_test, y_test_pred)
         
         model_results[name] = {
             "model": model,
-            "accuracy": acc,
+            "train_accuracy": train_acc,
+            "accuracy": test_acc,  # 기존 코드 호환용 (test)
             "f1_score": f1,
             "confusion_matrix": cm,
             "y_test": y_test,
-            "y_pred": y_pred
+            "y_pred": y_test_pred
         }
         
     return model_results, features, X_test, df
@@ -167,7 +172,12 @@ if data_loaded:
 
     st.markdown("---")
     st.table(pd.DataFrame([
-        {"AI 모델 이름": name, "정확도 (Accuracy)": f"{info['accuracy']*100:.1f}%", "F1-Score (Macro)": f"{info['f1_score']:.2f}"}
+        {
+            "AI 모델 이름": name, 
+            "훈련 정확도(Train Acc)": f"{info['train_accuracy']*100:.1f}%",
+            "검증 정확도(Test Acc)": f"{info['accuracy']*100:.1f}%", 
+            "F1-Score (Macro)": f"{info['f1_score']:.2f}"
+        }
         for name, info in results.items()
     ]))
     st.success(f"🏆 **예측에 시뮬레이션 중인 알고리즘:** `{selected_model_name}`")
@@ -228,7 +238,7 @@ if data_loaded:
             
         st.markdown("#### 💡 AI 마인드 케어 처방전")
         if predicted_stress >= 8:
-            st.markdown(f"현재 AI 모델 분석 결과, 입력하신 생활 패턴은 청소년 고위험 스트레스 군의 전형적인 수치와 일치합니다. 특히 **수면 개선과 취침 전 전자기기 차단**이 가장 시급합니다. 혼사 고민하기보다는 학교 내 위클래스(Wee 클래스)나 청소년 상담 전화(1388)를 통해 대화를 나누어 보는 것을 적극 권장합니다.")
+            st.markdown(f"현재 AI 모델 분석 결과, 입력하신 생활 패턴은 청소년 고위험 스트레스 군의 전형적인 수치와 일치합니다. 특히 **수면 개선과 취침 전 전자기기 차단**이 가장 시급합니다. 혼자 고민하기보다는 학교 내 위클래스(Wee 클래스)나 청소년 상담 전화(1388)를 통해 대화를 나누어 보는 것을 적극 권장합니다.")
         elif predicted_stress >= 4:
             st.markdown(f"현재는 일상적인 스트레스를 겪고 있는 단계이지만, 불규칙한 생활 습관이 지속된다면 만성 피로나 무기력증으로 이어질 수 있습니다. 주말을 이용해 모바일 디톡스(SNS 끊기)를 실천하거나 운동 시간을 조금 더 확보하여 내면의 에너지를 충전해 주세요.")
         else:
@@ -254,27 +264,73 @@ if data_loaded:
             """)
             
         with insight_col2:
-            fig5, ax5 = plt.subplots(figsize=(5, 4))
+            fig5, ax5 = plt.subplots(figsize=(5, 3.8))
             original_df['Stress Group'] = np.where(original_df['stress_level'] >= 8, 'High Stress', 'Normal')
-            sns.scatterplot(
+            
+            sns.violinplot(
                 data=original_df, 
-                x='daily_social_media_hours', 
+                x='Stress Group', 
                 y='sleep_hours', 
-                hue='Stress Group', 
-                palette={'High Stress': '#d95f02', 'Normal': '#7570b3'},
-                alpha=0.6,
+                palette={'High Stress': '#e74c3c', 'Normal': '#2ecc71'}, 
+                inner='quartile', 
                 ax=ax5
             )
-            ax5.set_xlabel("Daily SNS Hours")
+            ax5.set_xlabel("Stress Group Classification")
             ax5.set_ylabel("Sleep Hours")
             ax5.grid(False)
             sns.despine()
             st.pyplot(fig5)
             
-            # [수정 사항] 그래프 해석 및 가이드 문구 보강
             st.markdown("""
-            🔎 **그래프 분석 및 가이드:**
-            * **우측 하단의 주황색 밀집 구역:** SNS 사용량이 많고(5시간 이상) 수면 시간이 적은(6시간 이하) 영역에 **고스트레스 위험군(High Stress)**이 뚜렷하게 집중분포해 있습니다.
-            * **좌측 상단의 보라색 밀집 구역:** 반대로 SNS 사용이 적고 수면이 충분할수록 스트레스 수치가 **안정(Normal)** 상태를 유지합니다. 
-            * **결론:** 이 분포는 AI 모델이 수많은 청소년 데이터를 통해 학습한 패턴의 실체이며, 스트레스 완화를 위해 어느 방향으로 생활 습관을 개선해야 하는지 시각적으로 증명합니다.
+            🔎 **데이터 분포 그래프 해석:**
+            * **고스트레스 위험군(빨간색 바이올린):** 수면 시간의 부피가 **5~6시간대**에 극단적으로 치우쳐 뚱뚱하게 뭉쳐 있습니다. 수면 결핍이 고스트레스 상태의 결정적 지표임을 뜻합니다.
+            * **정상군(초록색 바이올린):** 데이터의 중심축이 **7~9시간 영역**에 넓고 안정적으로 펼쳐져 있어 균형 잡힌 밀도를 보여줍니다.
             """)
+
+        # -----------------------------------------------------
+        # 6. [신규 추가] AI 모델 자체 신뢰성 및 과적합 위험도 분석
+        # -----------------------------------------------------
+        st.markdown("---")
+        st.markdown("### ⚠️ AI 알고리즘 신뢰성 및 과적합(Overfitting) 위험도 평가")
+        st.markdown("실시간으로 수치를 조절하며 학습시킨 현재 모델의 구조적 안정성을 자체 진단합니다.")
+        
+        # 진단 대상 모델 정보 불러오기
+        active_info = results[selected_model_name]
+        train_acc = active_info["train_accuracy"]
+        test_acc = active_info["accuracy"]
+        
+        # 학습 성능과 검증 성능의 차이(Gap) 계산
+        overfit_gap = train_acc - test_acc
+        
+        risk_col1, risk_col2 = st.columns([1, 2])
+        
+        with risk_col1:
+            st.metric(label="🎯 학습-검증 정확도 격차(Gap)", value=f"{overfit_gap*100:.2f}%")
+            
+            # 격차에 따른 위험도 등급 산정 및 시각화
+            if overfit_gap >= 0.15:
+                st.error("🚨 **위험 수준: 과적합 상태 (Overfitting)**")
+            elif overfit_gap >= 0.05:
+                st.warning("⚠️ **위험 수준: 잠재적 위험 (Moderate)**")
+            elif train_acc < 0.40:
+                st.info("📉 **위험 수준: 과소적합 상태 (Underfitting)**")
+            else:
+                st.success("✅ **위험 수준: 매우 안정적 (Optimal)**")
+                
+        with risk_col2:
+            st.markdown("#### 🔍 알고리즘 신뢰성 정밀 진단 소견")
+            if overfit_gap >= 0.15:
+                st.markdown(f"현재 선택된 `{selected_model_name}` 모델은 **훈련 데이터에 과도하게 동화된(과적합) 상태**입니다. "
+                            f"훈련용 문제집(Train Acc: {train_acc*100:.1f}%)은 완벽히 풀지만, 새로운 모의고사(Test Acc: {test_acc*100:.1f}%)에서는 오답률이 높은 현상입니다. "
+                            f"**해결책:** 의사결정나무의 최대 깊이를 줄이거나, 로지스틱 규제 강도를 낮추어 모델을 더 단순하게 깎아내야 실전 예측 신뢰도가 상승합니다.")
+            elif overfit_gap >= 0.05:
+                st.markdown(f"훈련 정확도({train_acc*100:.1f}%)와 검증 정확도({test_acc*100:.1f}%) 사이에 약간의 괴리가 존재합니다. "
+                            f"완전한 과적합은 아니지만 복잡한 난수가 일부 섞여 있으므로, 제어판 슬라이더를 통해 나무 개수를 조절하거나 조금 더 규제를 주어 일반화 성능을 올리는 것을 권장합니다.")
+            elif train_acc < 0.40:
+                st.markdown(f"훈련 데이터조차 제대로 분류해내지 못하는 **과소적합(Underfitting)** 상태입니다. "
+                            f"모델의 뼈대나 제약 수치가 너무 빡빡하여 청소년 데이터의 패턴을 전혀 학습하지 못하고 있습니다. "
+                            f"**해결책:** 하이퍼파라미터 제어판에서 나무 깊이를 늘리거나 규제 강도(C값)를 키워 모델이 더 깊게 공부할 수 있는 환경을 열어주어야 합니다.")
+            else:
+                st.markdown(f"현재 설정된 `{selected_model_name}` 모델은 **최적의 학습 밸런스(Generalized Optimal Model)**를 이루고 있습니다. "
+                            f"훈련 스코어와 검증 스코어가 나란히 균형을 이루며, 실시간 예측기 폼에 어떤 새로운 데이터 조합을 입력하더라도 "
+                            f"가장 편향 없이 정확하고 신뢰도 높은 스트레스 수치를 도출해 낼 수 있는 견고한 상태입니다.")
