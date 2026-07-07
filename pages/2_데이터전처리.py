@@ -3,113 +3,118 @@ import pandas as pd
 import numpy as np
 import os
 
-# --- 1. 앱 페이지 설정 ---
+# --- [앱 기본 설정 & 테마화] ---
 st.set_page_config(
-    page_title="Data Clean Pro App",
-    page_icon="🧼",
+    page_title="CleanMetric Pro — Data Imputation Engine",
+    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. 전문 대시보드용 CSS 스타일 기법 apply ---
+# --- [고급 앱 인터페이스용 CSS] ---
 st.markdown("""
     <style>
-        /* 메인 백그라운드 및 폰트 세팅 */
-        .reportview-container { background: #F8FAFC; }
+        /* 메인 프레임워크 배경 및 폰트 클렌징 */
+        .stApp { background-color: #F8FAFC; }
         
-        /* 앱 헤더 스타일 */
-        .app-header { 
-            padding: 20px; 
-            background: linear-gradient(135deg, #1E3A8A, #3B82F6); 
-            color: white; 
-            border-radius: 10px; 
+        /* 상용 SaaS 스타일 상단 탑바 */
+        .app-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E2E8F0;
+            border-radius: 12px;
             margin-bottom: 25px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
-        .app-title { font-size: 26px; font-weight: bold; margin: 0; }
-        .app-subtitle { font-size: 13px; opacity: 0.9; margin-top: 5px; }
+        .brand-logo { font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; }
+        .brand-logo span { color: #2563EB; }
+        .app-status-badge { background: #E0F2FE; color: #0369A1; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
         
-        /* 섹션 카드 스타일 */
-        .status-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        /* 메인 데이터 대시보드 카드 */
+        .metric-card-container {
+            background: #FFFFFF;
             border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             margin-bottom: 20px;
         }
-        .card-title { font-size: 16px; font-weight: bold; color: #1E3A8A; margin-bottom: 15px; }
+        .section-title { font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        
+        /* 데이터프레임 헤더 라벨 */
+        .table-label-raw { background: #FEF2F2; color: #991B1B; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 10px; display: inline-block; }
+        .table-label-clean { background: #ECFDF5; color: #065F46; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 10px; display: inline-block; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- App 상단 헤더 ---
+# --- [App 상단 커스텀 탑바 인프라] ---
 st.markdown("""
-    <div class="app-header">
-        <div class="app-title">🧼 데이터 정제 및 전/후 비교 시스템 (Data Clean Pro)</div>
-        <div class="app-subtitle">결측치와 IQR 기반 이상치를 실시간 탐색하고 정제 전/후의 데이터프레임을 완벽하게 비교 분석합니다.</div>
+    <div class="app-topbar">
+        <div class="brand-logo">🛡️ CleanMetric <span>Pro</span></div>
+        <div class="app-status-badge">Engine v2.4 Active</div>
     </div>
 """, unsafe_allow_html=True)
 
-# --- 3. 사이드바 컨트롤러 (앱 느낌 물씬 나도록 구성) ---
+# --- [사이드바: 프리미엄 환경설정 패널] ---
 with st.sidebar:
-    st.markdown("### 🎛️ 애플리케이션 제어")
-    st.info("이 앱은 업로드된 데이터셋의 무결성을 검증하고 원클릭으로 결측치 및 이상치를 보정합니다.")
+    st.markdown("### ⚙️ Engine Settings")
+    st.write("품질 진단 및 파이프라인 가동 규칙")
+    st.markdown("---")
+    
+    # 실제 프로덕션 앱처럼 옵션을 주는 구성
+    imputation_strategy = st.radio("수치형 결측치 대체 방법", ["Mean (평균값)", "Median (중앙값)"], index=0)
+    outlier_threshold = st.slider("IQR 가중치 임계값", min_value=1.0, max_value=3.0, value=1.5, step=0.1)
     
     st.markdown("---")
-    st.markdown("**정제 프로세스 기준**")
-    st.write("- **수치형 결측치:** 컬럼 평균값(Mean) 대체")
-    st.write("- **범주형 결측치:** 컬럼 최빈값(Mode) 대체")
-    st.write("- **이상치 탐지:** IQR (Q1 - 1.5*IQR ~ Q3 + 1.5*IQR)")
-    st.write("- **이상치 처리:** 정상 범위 내 평균값 대체")
+    st.markdown("💡 **파이프라인 요약**")
+    st.caption("본 애플리케이션은 원본 데이터 원격 검싱 후 결측치 및 통계적 극단치를 탐지하여 격리/보정하는 자동화 대시보드입니다.")
 
-# --- 4. 데이터 로드 및 데모 데이터 안전장치 ---
+# --- [데이터 로드 및 무결성 예외 처리] ---
 data_path = "Teen_Mental_Health_Dataset.csv"
 
 if os.path.exists(data_path):
     df_raw = pd.read_csv(data_path)
 else:
-    # 파일이 없는 비상 상황을 위한 Mock 데이터셋 생성 (에러 방지용)
+    # 깃허브 등 파일 유실 환경을 대비한 앱 구동 전용 엔지니어링 데이터셋
     np.random.seed(42)
-    n_samples = 150
+    n_samples = 200
     mock_data = {
-        "daily_social_media_hours": np.random.uniform(1, 8, n_samples),
+        "daily_social_media_hours": np.random.uniform(1.0, 7.5, n_samples),
         "stress_level": np.random.randint(1, 10, n_samples).astype(float),
+        "social_interaction_level": np.random.randint(1, 5, n_samples).astype(float),
         "gender": np.random.choice(["Male", "Female"], n_samples),
         "depression_label": np.random.choice(["Mild", "Moderate", "Severe"], n_samples)
     }
     df_raw = pd.DataFrame(mock_data)
-    
-    # 인위적 결측치 & 이상치 주입
-    df_raw.loc[np.random.choice(n_samples, 12), "daily_social_media_hours"] = np.nan
-    df_raw.loc[np.random.choice(n_samples, 8), "stress_level"] = np.nan
-    df_raw.loc[np.random.choice(n_samples, 4), "stress_level"] = 99.0  # 극단적 상한 이상치
-    df_raw.loc[np.random.choice(n_samples, 4), "daily_social_media_hours"] = -10.0  # 극단적 하한 이상치
-    
-    st.sidebar.warning("⚠️ CSV 파일이 없어 데모 데이터로 가동 중입니다.")
+    # 인위적 에러 주입
+    df_raw.loc[np.random.choice(n_samples, 15), "daily_social_media_hours"] = np.nan
+    df_raw.loc[np.random.choice(n_samples, 10), "stress_level"] = np.nan
+    df_raw.loc[np.random.choice(n_samples, 5), "stress_level"] = 99.0 
+    df_raw.loc[np.random.choice(n_samples, 5), "daily_social_media_hours"] = -8.0
+    st.sidebar.caption("⚡ *Notice: 임시 검싱 데모 스트림 운용 중*")
 
-# 데이터 카피본 생성
 df = df_raw.copy()
 
 # ---------------------------------------------------------
-# ⚙️ 핵심 로직 1: 결측치(NaN) 탐색 및 정제 수행
+# 🛠️ [정제 파이프라인 연산]
 # ---------------------------------------------------------
-raw_null_counts = df_raw.isnull().sum()
-total_raw_null = raw_null_counts.sum()
-
+# 1. 결측치 정제
+raw_null_total = df_raw.isnull().sum().sum()
 replaced_null_count = 0
+
 for col in df.columns:
     null_cnt = df[col].isnull().sum()
     if null_cnt > 0:
         if df[col].dtype in ['int64', 'float64']:
-            df[col] = df[col].fillna(df[col].mean())
+            fill_val = df[col].mean() if "Mean" in imputation_strategy else df[col].median()
+            df[col] = df[col].fillna(fill_val)
         else:
-            mode_val = df[col].mode()[0] if not df[col].mode().empty else "Unknown"
-            df[col] = df[col].fillna(mode_val)
+            df[col] = df[col].fillna(df[col].mode()[0] if not df[col].mode().empty else "Unknown")
         replaced_null_count += null_cnt
 
-# ---------------------------------------------------------
-# ⚙️ 핵심 로직 2: IQR 기반 이상치(Outlier) 탐색 및 정제 수행
-# ---------------------------------------------------------
+# 2. IQR 이상치 정제
 numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
 replaced_outlier_count = 0
 
@@ -118,77 +123,77 @@ for col in numeric_cols:
     q3 = df[col].quantile(0.75)
     iqr = q3 - q1
     
-    lower_bound = q1 - 1.5 * iqr
-    upper_bound = q3 + 1.5 * iqr
+    lower_bound = q1 - outlier_threshold * iqr
+    upper_bound = q3 + outlier_threshold * iqr
     
     outlier_mask = (df[col] < lower_bound) | (df[col] > upper_bound)
     outlier_cnt = outlier_mask.sum()
     
     if outlier_cnt > 0:
-        normal_mean = df.loc[~outlier_mask, col].mean()
-        df.loc[outlier_mask, col] = normal_mean
+        df.loc[outlier_mask, col] = df.loc[~outlier_mask, col].mean()
         replaced_outlier_count += outlier_cnt
 
 
 # ---------------------------------------------------------
-# 📊 화면 배치: 현황 스코어보드 (KPI Metrics)
+# 📊 [인터페이스 레이어 1: 메인 KPI 스코어바]
 # ---------------------------------------------------------
-st.markdown('<div class="card-title">📈 1. 데이터 품질 요약 지표</div>', unsafe_allow_html=True)
-m1, m2, m3, m4 = st.columns(4)
-with m1:
-    st.metric(label="전체 데이터 크기", value=f"{df.shape[0]} 행 × {df.shape[1]} 열")
-with m2:
-    st.metric(label="탐지된 결측치(NaN)", value=f"{total_raw_null} 개", delta="자동 정제 완료")
-with m3:
-    st.metric(label="탐지된 이상치(IQR 기준)", value=f"{replaced_outlier_count} 개", delta="평균값 대체 완료", delta_color="inverse")
-with m4:
-    st.metric(label="데이터 정제 상태", value="100% Clean" if df.isnull().sum().sum() == 0 else "미완료")
+st.markdown('<div class="section-title">📊 데이터 품질 매트릭 모니터링</div>', unsafe_allow_html=True)
+
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+with kpi1:
+    st.metric(label="총 분석 레코드 크기", value=f"{df.shape[0]} Rows", delta=f"{df.shape[1]} Columns")
+with kpi2:
+    st.metric(label="탐지된 총 결측치 (NaN)", value=f"{raw_null_total} 건", delta="보정 완결", delta_color="normal")
+with kpi3:
+    st.metric(label="통계적 이상치 (Outlier)", value=f"{replaced_outlier_count} 건", delta="평균 대체 완료", delta_color="inverse")
+with kpi4:
+    st.metric(label="데이터 파이프라인 헬스", value="100 %" if df.isnull().sum().sum() == 0 else "오류 보정 필요")
 
 
 # ---------------------------------------------------------
-# 🔄 화면 배치: 전처리 전/후 DataFrame 완벽 비교 파트
+# 🔄 [인터페이스 레이어 2: 데이터 무결성 검증 및 전/후 전면 비교]
 # ---------------------------------------------------------
 st.markdown("---")
-st.markdown('<div class="card-title">🔄 2. 전처리 전 (Original) vs 전처리 후 (Cleaned) 데이터 비교</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">🔄 전처리 전/후 데이터 다차원 대조 인터페이스</div>', unsafe_allow_html=True)
 
-# 탭 구조를 활용한 영역 분할
-tab1, tab2, tab3 = st.tabs([
-    "📄 원본/정제본 데이터프레임 실시간 비교", 
-    "📊 변수별 결측치(NaN) 클렌징 결과", 
-    "📈 기술 통계량 변화 분석 (이상치 보정 확인)"
+# 복잡한 탭 레이아웃을 하나의 유기적 화면으로 제어하기 위해 탭 UI 생성
+app_tab1, app_tab2, app_tab3 = st.tabs([
+    "📂 Raw vs Cleaned 원장 데이터 스크리닝", 
+    "📊 변수별 데이터 소실률(결측치) 집계", 
+    "📈 정제 변수 통계 변동 추이 요약"
 ])
 
-# 탭 1: 실제 데이터프레임 양옆으로 띄워서 비교하기
-with tab1:
-    col_left, col_right = st.columns(2)
-    with col_left:
-        st.markdown("<b style='color:#EF4444;'>🚨 [전처리 전] 원본 데이터프레임 (상위 15개 행)</b>", unsafe_allow_html=True)
-        st.dataframe(df_raw.head(15), use_container_width=True)
-    with col_right:
-        st.markdown("<b style='color:#10B981;'>✅ [전처리 후] 정제 완료 데이터프레임 (상위 15개 행)</b>", unsafe_allow_html=True)
-        st.dataframe(df.head(15), use_container_width=True)
+# [탭 1: 로 데이터프레임 전/후 대조]
+with app_tab1:
+    col_raw, col_clean = st.columns(2)
+    with col_raw:
+        st.markdown('<span class="table-label-raw">🚨 [INCOMING] 오염 원본 데이터 스냅샷</span>', unsafe_allow_html=True)
+        st.dataframe(df_raw.head(12), use_container_width=True, height=450)
+    with col_clean:
+        st.markdown('<span class="table-label-clean">✅ [PROCESSED] 정제 완결 데이터 원장</span>', unsafe_allow_html=True)
+        st.dataframe(df.head(12), use_container_width=True, height=450)
 
-# 탭 2: 결측치 현황 테이블 비교
-with tab2:
-    st.markdown("##### 🔍 각 변수(Column)별 결측치 잔존 상태 비교 테이블")
-    null_comparison_matrix = pd.DataFrame({
-        "전처리 전 결측치 개수 (Original)": df_raw.isnull().sum(),
-        "전처리 후 결측치 개수 (Cleaned)": df.isnull().sum()
+# [탭 2: 결측치 집계 리포팅]
+with app_tab2:
+    st.markdown("##### 📝 변수별 결측치 제거 결과 매트릭스")
+    null_report = pd.DataFrame({
+        "정제 전 결측치 (Original)": df_raw.isnull().sum(),
+        "정제 후 결측치 (Cleaned)": df.isnull().sum(),
+        "클렌징 수량": df_raw.isnull().sum() - df.isnull().sum()
     })
-    st.dataframe(null_comparison_matrix, use_container_width=True)
+    st.dataframe(null_report, use_container_width=True)
 
-# 탭 3: 이상치 대체로 인한 수치 통계 변화 확인
-with tab3:
-    st.markdown("##### 🔍 수치형 변수의 기술 통계 정보 변화량")
-    st.caption("이상치가 제거되면서 변수의 최댓값(max), 최솟값(min), 표준편차(std) 등이 정상 범위로 보정된 것을 확인할 수 있습니다.")
-    
+# [탭 3: 수치 통계량 보정 추이 확인]
+with app_tab3:
+    st.markdown("##### 📝 극단치 제거에 따른 주요 통계 메트릭 변동표")
     if len(numeric_cols) > 0:
-        selected_target_col = st.selectbox("통계량 변화를 모니터링할 변수를 선택하세요:", numeric_cols)
+        target_view_col = st.selectbox("추이를 모니터링할 변수(컬럼)를 선택하세요:", numeric_cols)
         
-        statistical_summary = pd.DataFrame({
-            "전처리 전 통계량 (Original)": df_raw[selected_target_col].describe(),
-            "전처리 후 통계량 (Cleaned)": df[selected_target_col].describe()
+        comparison_summary = pd.DataFrame({
+            "정제 전 통계량 (Original)": df_raw[target_view_col].describe(),
+            "정제 후 통계량 (Cleaned)": df[target_view_col].describe()
         })
-        st.dataframe(statistical_summary, use_container_width=True)
+        # 소수점 둘째자리까지 정돈하여 시인성 최적화
+        st.dataframe(comparison_summary.style.format("{:.2f}"), use_container_width=True)
     else:
-        st.info("데이터셋 내에 분석할 수 있는 수치형 변수가 존재하지 않습니다.")
+        st.info("데이터셋 내에 분석 가능한 수치형 인프라가 존재하지 않습니다.")
