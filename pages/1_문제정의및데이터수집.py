@@ -141,7 +141,81 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 사이드바 네비게이션
+# --- 원본 컬럼 목록 (사용자 제공) 및 영어(한글) 병기 매핑
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ORIGINAL_COLUMNS = [
+    "age",
+    "gender",
+    "daily_social_media_hours",
+    "platform_usage",
+    "sleep_hours",
+    "screen_time_before_sleep",
+    "academic_performance",
+    "physical_activity",
+    "social_interaction_level",
+    "stress_level"
+]
+
+RENAME_BILINGUAL = {
+    "age": "Age (연령)",
+    "gender": "Gender (성별)",
+    "daily_social_media_hours": "Daily Social Media Hours (일일 SNS 사용 시간)",
+    "platform_usage": "Platform Usage (주 사용 플랫폼)",
+    "sleep_hours": "Sleep Hours (수면 시간)",
+    "screen_time_before_sleep": "Screen Time Before Sleep (취침 전 화면 사용 시간)",
+    "academic_performance": "Academic Performance (학업 성취도)",
+    "physical_activity": "Physical Activity (신체 활동)",
+    "social_interaction_level": "Social Interaction Level (사회적 교류 수준)",
+    "stress_level": "Stress Level (스트레스 수준)"
+}
+
+# 컬럼별 사용자 설명 (영어 / 한국어)
+COLUMN_DESCRIPTIONS = {
+    "age": {
+        "en": "age of student",
+        "ko": "학생의 나이"
+    },
+    "gender": {
+        "en": "male or female",
+        "ko": "성별 (남/여)"
+    },
+    "daily_social_media_hours": {
+        "en": "hours spent daily",
+        "ko": "일일 SNS 사용 시간 (시간)"
+    },
+    "platform_usage": {
+        "en": "Instagram / TikTok / both",
+        "ko": "주 사용 플랫폼 (Instagram / TikTok / 둘 다)"
+    },
+    "sleep_hours": {
+        "en": "daily sleep time",
+        "ko": "일일 수면 시간 (시간)"
+    },
+    "screen_time_before_sleep": {
+        "en": "phone use before sleep",
+        "ko": "취침 전 휴대폰 사용 시간"
+    },
+    "academic_performance": {
+        "en": "study performance",
+        "ko": "학업 성취도 / 성적"
+    },
+    "physical_activity": {
+        "en": "exercise level",
+        "ko": "운동/신체 활동 수준"
+    },
+    "social_interaction_level": {
+        "en": "real-life interaction",
+        "ko": "오프라인(실제) 교류 수준"
+    },
+    "stress_level": {
+        "en": "stress (1–10)",
+        "ko": "스트레스 수준 (1–10)"
+    }
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 사이드바: 네비게이션 & 업로드
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 with st.sidebar:
@@ -152,40 +226,100 @@ with st.sidebar:
         "📊 데이터 수집",
         "🤖 모델 선택"
     ], label_visibility="collapsed")
+    st.divider()
+    st.markdown("## 📥 데이터 업로드 (CSV)")
+    uploaded_file = st.file_uploader("CSV 파일 선택 (컬럼명이 영문 원본키와 일치해야 자동 매핑됩니다)", type=["csv"])
+    st.markdown("• 업로드하지 않으면 예시 데이터로 대체됩니다.")
+    st.divider()
+    if st.checkbox("원본 컬럼 목록 보기"):
+        st.write(ORIGINAL_COLUMNS)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 데이터 로드 및 컬럼명 변경 함수
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def load_data(uploaded):
+    if uploaded is None:
+        return None
+    try:
+        try:
+            df = pd.read_csv(uploaded)
+        except Exception:
+            uploaded.seek(0)
+            df = pd.read_csv(uploaded, encoding="cp949")
+        return df
+    except Exception as e:
+        st.error(f"데이터 로드 실패: {e}")
+        return None
+
+def apply_bilingual_rename(df: pd.DataFrame):
+    mapping = {k: v for k, v in RENAME_BILINGUAL.items() if k in df.columns}
+    renamed = df.rename(columns=mapping)
+    return renamed, mapping
+
+# 예시 데이터 (원본 컬럼명 사용)
+df = load_data(uploaded_file)
+if df is None:
+    df = pd.DataFrame({
+        "age": [15, 17, 16, 14],
+        "gender": ["F", "M", "F", "M"],
+        "daily_social_media_hours": [3, 5, 2, 4],
+        "platform_usage": ["Instagram", "TikTok", "Both", "Instagram"],
+        "sleep_hours": [7, 5.5, 8, 6],
+        "screen_time_before_sleep": [45, 120, 10, 30],
+        "academic_performance": [85, 72, 90, 78],
+        "physical_activity": [3, 1, 4, 2],
+        "social_interaction_level": [6, 3, 8, 5],
+        "stress_level": [7, 9, 4, 6]
+    })
+    st.sidebar.info("샘플 데이터를 사용하고 있습니다. CSV를 업로드하면 대체됩니다.")
+
+renamed_df, applied_map = apply_bilingual_rename(df)
+
+# 프리뷰 및 다운로드
+with st.expander("🔎 업로드된 데이터 미리보기 및 컬럼명 변경"):
+    st.write("영어(한글) 병기 라벨이 적용됩니다.")
+    st.write("원본 컬럼:", list(df.columns))
+    if applied_map:
+        st.write("적용된 매핑 (원본 -> 변경):")
+        st.table(pd.DataFrame(list(applied_map.items()), columns=["원본", "영어(한글)"]))
+    else:
+        st.warning("CSV의 컬럼명이 매핑되지 않았습니다. 원본 영문 키와 정확히 일치해야 자동 매핑됩니다.")
+        st.write("원본 영문 키 목록:", ORIGINAL_COLUMNS)
+    st.write("변경된 데이터 (상위 10개):")
+    st.dataframe(renamed_df.head(10), use_container_width=True)
+    csv_buf = renamed_df.to_csv(index=False).encode("utf-8")
+    st.download_button("변경된 데이터 다운로드 (CSV UTF-8)", csv_buf, "renamed_data.csv", "text/csv")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PAGE 1: 핵심 요약
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 if page == "🎯 핵심 요약":
-    # 헤더
     st.markdown("""
     <div style="text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); border-radius: 20px; margin-bottom: 40px; box-shadow: 0 8px 25px rgba(0,0,0,0.12);">
         <h1 style="color: white; font-size: 48px; margin: 0; font-weight: 900;">🧠 우울증 AI 조기 발견</h1>
         <p style="color: rgba(255,255,255,0.95); font-size: 18px; margin: 10px 0 0 0;">데이터로 학생 정신건강 지키기</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # 핵심 수치
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-box">
             <div class="metric-label">📊 학생 수</div>
-            <div class="metric-number">1,000</div>
+            <div class="metric-number">{len(renamed_df)}</div>
             <div class="metric-label">명 데이터</div>
         </div>
         """, unsafe_allow_html=True)
-    
     with col2:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-box">
-            <div class="metric-label">📋 체크 항목</div>
-            <div class="metric-number">12</div>
-            <div class="metric-label">가지</div>
+            <div class="metric-label">📋 수집 항목</div>
+            <div class="metric-number">{len(RENAME_BILINGUAL)}</div>
+            <div class="metric-label">개</div>
         </div>
         """, unsafe_allow_html=True)
-    
     with col3:
         st.markdown("""
         <div class="metric-box">
@@ -194,7 +328,6 @@ if page == "🎯 핵심 요약":
             <div class="metric-label">Random Forest</div>
         </div>
         """, unsafe_allow_html=True)
-    
     with col4:
         st.markdown("""
         <div class="metric-box">
@@ -203,12 +336,9 @@ if page == "🎯 핵심 요약":
             <div class="metric-label">자살 예방</div>
         </div>
         """, unsafe_allow_html=True)
-    
+
     st.divider()
-    
-    # 문제 vs 솔루션
     col1, col2 = st.columns(2)
-    
     with col1:
         st.markdown("""
         <div class="problem-box">
@@ -218,7 +348,6 @@ if page == "🎯 핵심 요약":
             <p>• 코로나 이후 악화 추세</p>
         </div>
         """, unsafe_allow_html=True)
-    
     with col2:
         st.markdown("""
         <div class="solution-box">
@@ -228,21 +357,16 @@ if page == "🎯 핵심 요약":
             <p>• 생명 구할 수 있음</p>
         </div>
         """, unsafe_allow_html=True)
-    
     st.markdown("""
     <div class="highlight">
-        <strong style="color: #667eea; font-size: 16px;">💡 핵심:</strong> AI가 SNS, 수면, 스트레스 등 12가지 생활 데이터를 분석해서 우울증 위험 학생을 미리 찾아낸다!
+        <strong style="color: #667eea; font-size: 16px;">💡 핵심:</strong> AI가 생활 데이터를 분석해서 우울증 위험 학생을 미리 찾아낸다!
     </div>
     """, unsafe_allow_html=True)
-    
-    # 기대 효과 차트
-    st.markdown("### 📈 기대 효과")
-    
+
     effect_data = pd.DataFrame({
         '효과': ['자살 예방', '조기 발견율', '치료 성공율'],
         '개선율 (%)': [35, 45, 40]
     })
-    
     fig = px.bar(effect_data, x='효과', y='개선율 (%)',
                  color='개선율 (%)',
                  color_continuous_scale=['#667eea', '#764ba2', '#f093fb'],
@@ -260,27 +384,17 @@ if page == "🎯 핵심 요약":
 
 elif page == "❓ 문제 정의":
     st.markdown('<div class="section-title">❓ 왜 이 문제를 풀어야 할까?</div>', unsafe_allow_html=True)
-    
-    # 통계 데이터
     col1, col2, col3 = st.columns(3)
-    
     with col1:
         st.metric("청소년 정신질환율", "10-20%", delta="증가 추세")
-    
     with col2:
         st.metric("자살 사망 순위", "2위", delta="심각")
-    
     with col3:
         st.metric("진단 시간 단축", "미진단→조기발견", delta="목표")
-    
     st.divider()
-    
-    # 현황 vs 목표
     tab1, tab2 = st.tabs(["📊 현재 상황", "🎯 우리의 목표"])
-    
     with tab1:
         col1, col2 = st.columns([1, 1])
-        
         with col1:
             st.markdown("""
             **청소년 정신건강 위기**
@@ -291,9 +405,7 @@ elif page == "❓ 문제 정의":
             - 조기 발견 어려움
             - 치료 시기 놓치기 쉬움
             """)
-        
         with col2:
-            # 위기 시각화
             crisis_data = pd.DataFrame({
                 ' ': ['정신질환\n있음', '정상'],
                 '비율': [15, 85]
@@ -307,10 +419,8 @@ elif page == "❓ 문제 정의":
             fig.update_layout(height=300, template='plotly_white', showlegend=False,
                             font=dict(color='#333'))
             st.plotly_chart(fig, use_container_width=True)
-    
     with tab2:
         col1, col2 = st.columns([1, 1])
-        
         with col1:
             st.markdown("""
             **AI로 조기 발견 시스템**
@@ -320,14 +430,11 @@ elif page == "❓ 문제 정의":
             ✓ 빠른 개입 → 치료율 ↑  
             ✓ 자살 예방 → 생명 보호  
             """)
-        
         with col2:
-            # 시간에 따른 개선
             time_data = pd.DataFrame({
                 '시간': ['미진단', '1주', '1개월', '3개월'],
                 '치료율 (%)': [10, 35, 65, 90]
             })
-            
             fig = px.line(time_data, x='시간', y='치료율 (%)',
                           markers=True, template='plotly_white')
             fig.update_traces(line=dict(color='#43e97b', width=4), marker=dict(size=10))
@@ -337,94 +444,44 @@ elif page == "❓ 문제 정의":
             st.plotly_chart(fig, use_container_width=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# PAGE 3: 데이터 수집
+# PAGE 3: 데이터 수집 (컬럼 설명 포함)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 elif page == "📊 데이터 수집":
     st.markdown('<div class="section-title">📊 어떤 데이터를 수집했나?</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    **대상:** 1,000명 청소년 (13~18세)
-    
-    **기간:** 2023~2024년
-    """)
-    
+    st.markdown(f"**대상:** 1,000명 청소년 (13~18세)  \n**수집 항목 수:** {len(RENAME_BILINGUAL)}개")
     st.divider()
-    
-    # 12가지 항목 시각화
-    st.markdown("### 📥 수집한 12가지 항목")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        **🎮 행동 습관**
-        - SNS 시간
-        - 수면 시간
-        - 운동 시간
-        - 공부 성적
-        """)
-    
-    with col2:
-        st.markdown("""
-        **😟 마음 상태**
-        - 스트레스 (1~10)
-        - 불안감 (1~10)
-        - 휴대폰 중독
-        - 친구 만남 정도
-        """)
-    
-    with col3:
-        st.markdown("""
-        **📱 기타**
-        - 자기 전 핸드폰
-        - 학교 만족도
-        - 가족 관계
-        - 우울증 여부 ✓
-        """)
-    
+    st.markdown("### 📥 수집 항목 및 설명 (영어 — 한글)")
+    for key in ORIGINAL_COLUMNS:
+        label = RENAME_BILINGUAL.get(key, key)
+        desc_en = COLUMN_DESCRIPTIONS.get(key, {}).get("en", "")
+        desc_ko = COLUMN_DESCRIPTIONS.get(key, {}).get("ko", "")
+        st.markdown(f"- **{label}**  \n  • EN: {desc_en}  \n  • KO: {desc_ko}")
     st.divider()
-    
-    # 입출력 데이터
     st.markdown("### 🔄 데이터 입출력")
-    
     col1, col2 = st.columns(2)
-    
     with col1:
         st.markdown("""
-        **📥 입력 (Input)**
-        
-        학생의 12가지 생활 데이터
+        **📥 입력 (Input)**  
+        학생의 생활 데이터 (예: SNS 사용시간, 수면, 스트레스 등)
         
         예시:
-        - SNS: 3시간
-        - 수면: 6시간
-        - 스트레스: 8점
-        - ...
+        - Daily Social Media Hours: 3 (hours/day)
+        - Sleep Hours: 6 (hrs/night)
+        - Stress Level: 8 (1-10)
         """)
-    
     with col2:
         st.markdown("""
-        **📤 출력 (Output)**
+        **📤 출력 (Output)**  
+        우울증 판정 (예: depression = YES/NO)
         
-        우울증 판정
-        
-        ✓ **YES** → 위험군  
-        (즉시 상담 필요)
-        
-        ✓ **NO** → 정상  
-        (계속 관찰)
+        ✓ **YES** → 위험군 (즉시 상담 필요)  
+        ✓ **NO** → 정상 (계속 관찰)
         """)
-    
     st.divider()
-    
-    # 데이터 분포
-    st.markdown("### 📈 데이터 특성")
-    
+    st.markdown("### 📈 데이터 특성 (예시 시각화)")
     col1, col2 = st.columns(2)
-    
     with col1:
-        # SNS 시간 분포
         sns_data = pd.DataFrame({
             'SNS 시간': ['0-2시간', '2-4시간', '4-6시간', '6시간+'],
             '학생 수': [150, 300, 400, 150]
@@ -435,9 +492,7 @@ elif page == "📊 데이터 수집":
         fig.update_layout(height=300, showlegend=False, xaxis_title="", yaxis_title="명",
                         font=dict(color='#333'))
         st.plotly_chart(fig, use_container_width=True)
-    
     with col2:
-        # 우울증 비율
         depression_data = pd.DataFrame({
             ' ': ['우울증', '정상'],
             '비율': [35, 65]
@@ -455,27 +510,20 @@ elif page == "📊 데이터 수집":
 
 elif page == "🤖 모델 선택":
     st.markdown('<div class="section-title">🤖 어떤 AI 모델을 골랐을까?</div>', unsafe_allow_html=True)
-    
     st.markdown("""
     <div class="highlight">
         <strong style="color: #667eea; font-size: 16px;">❓ 이것은 "분류" 문제입니다</strong><br>
         우울증이 있다 / 없다 → 두 개 중 하나를 선택하는 것
     </div>
     """, unsafe_allow_html=True)
-    
     st.divider()
-    
-    # 모델 비교
     st.markdown("### 📊 모델 성능 비교")
-    
     model_data = pd.DataFrame({
         '모델': ['Logistic\nRegression', 'Decision\nTree', 'SVM', 'Random\nForest', 'XGBoost'],
         '정확도': [78, 75, 80, 83, 86],
         '속도': [10, 8, 6, 5, 4]
     })
-    
     col1, col2 = st.columns([1, 1])
-    
     with col1:
         fig = px.bar(model_data, x='모델', y='정확도',
                     color='정확도',
@@ -487,7 +535,6 @@ elif page == "🤖 모델 선택":
                         font=dict(color='#333'),
                         title_font=dict(size=16, color='#222'))
         st.plotly_chart(fig, use_container_width=True)
-    
     with col2:
         fig = px.bar(model_data, x='모델', y='속도',
                     color='속도',
@@ -499,14 +546,9 @@ elif page == "🤖 모델 선택":
                         font=dict(color='#333'),
                         title_font=dict(size=16, color='#222'))
         st.plotly_chart(fig, use_container_width=True)
-    
     st.divider()
-    
-    # 최종 선택
     st.markdown("### ✅ 최종 선택: Random Forest + XGBoost")
-    
     col1, col2 = st.columns(2)
-    
     with col1:
         st.markdown("""
         🏆 **Random Forest 선택 이유**
@@ -517,7 +559,6 @@ elif page == "🤖 모델 선택":
         ✓ 결과 이해하기 쉬움  
         ✓ 실제 사용에 최적  
         """)
-    
     with col2:
         st.markdown("""
         ⭐ **XGBoost로 검증**
@@ -527,7 +568,6 @@ elif page == "🤖 모델 선택":
         ✓ 두 모델이 일치 → 신뢰도 ↑  
         ✓ 최종 예측에 함께 사용  
         """)
-    
     st.markdown("""
     <div class="highlight">
         <strong style="color: #667eea; font-size: 16px;">💭 쉽게 말하면:</strong><br>
@@ -535,14 +575,9 @@ elif page == "🤖 모델 선택":
         그래서 더 정확하고 신뢰할 수 있다!
     </div>
     """, unsafe_allow_html=True)
-    
     st.divider()
-    
-    # 평가 지표
     st.markdown("### 📊 AI 성능 평가 지표")
-    
     col1, col2, col3 = st.columns(3)
-    
     with col1:
         st.markdown("""
         <div class="metric-box">
@@ -551,7 +586,6 @@ elif page == "🤖 모델 선택":
             <div class="metric-label">정답률</div>
         </div>
         """, unsafe_allow_html=True)
-    
     with col2:
         st.markdown("""
         <div class="metric-box">
@@ -560,7 +594,6 @@ elif page == "🤖 모델 선택":
             <div class="metric-label">위험군 찾기</div>
         </div>
         """, unsafe_allow_html=True)
-    
     with col3:
         st.markdown("""
         <div class="metric-box">
@@ -569,7 +602,6 @@ elif page == "🤖 모델 선택":
             <div class="metric-label">판별력</div>
         </div>
         """, unsafe_allow_html=True)
-    
     st.markdown("""
     <div class="highlight">
         <strong style="color: #c42c5b; font-size: 16px;">⚠️ 가장 중요한 것:</strong><br>
@@ -577,14 +609,11 @@ elif page == "🤖 모델 선택":
         우울한 학생을 놓치는 것이 괜찮은 학생을 우울하다고 진단하는 것보다 훨씬 심각하다.
     </div>
     """, unsafe_allow_html=True)
-    
-    # 메트릭 비교 차트
     metrics_data = pd.DataFrame({
         '지표': ['정확도', '재현율', '정밀도', 'ROC-AUC'],
         '목표': [80, 85, 75, 0.85],
         '달성': [80, 85, 78, 0.87]
     })
-    
     fig = px.bar(metrics_data, x='지표', y=['목표', '달성'],
                 barmode='group',
                 color_discrete_map={'목표': '#667eea', '달성': '#43e97b'},
@@ -600,16 +629,11 @@ elif page == "🤖 모델 선택":
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 st.divider()
-
 col1, col2, col3 = st.columns(3)
-
 with col1:
     st.info("📦 **설치**\n\npip install -r requirements.txt")
-
 with col2:
     st.info("▶️ **실행**\n\nstreamlit run app.py")
-
 with col3:
     st.info("📚 **패키지**\n\nstreamlit • pandas • plotly")
-
 st.markdown("<p style='text-align: center; color: #999; margin-top: 30px; font-size: 12px;'>🧠 청소년 정신건강 AI 프로젝트 | 2024</p>", unsafe_allow_html=True)
