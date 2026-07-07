@@ -27,7 +27,7 @@ st.set_page_config(
 )
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# DARK 테마 스타일
+# 라이트 테마 스타일
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 st.markdown("""
@@ -37,16 +37,21 @@ st.markdown("""
     * { font-family: 'Poppins', sans-serif; }
     
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 100%);
+        background: #ffffff;
+    }
+    
+    [data-testid="stSidebar"] {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
     }
     
     .metric-box {
-        background: linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(240,147,251,0.1) 100%);
+        background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(240,147,251,0.08) 100%);
         padding: 25px;
         border-radius: 15px;
         border-left: 5px solid #667eea;
         text-align: center;
-        color: white;
+        color: #333;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     
     .metric-number {
@@ -60,39 +65,42 @@ st.markdown("""
     
     .metric-label {
         font-size: 14px;
-        color: #aaa;
+        color: #666;
         font-weight: 600;
     }
     
     .problem-box {
-        background: linear-gradient(135deg, rgba(245,87,108,0.15) 0%, rgba(240,147,251,0.05) 100%);
-        padding: 20px;
+        background: linear-gradient(135deg, rgba(245,87,108,0.1) 0%, rgba(240,147,251,0.05) 100%);
+        padding: 25px;
         border-left: 5px solid #f5576c;
         border-radius: 12px;
-        color: #f0f0f0;
+        color: #333;
         margin: 15px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
     }
     
     .solution-box {
-        background: linear-gradient(135deg, rgba(67,233,123,0.15) 0%, rgba(79,172,254,0.05) 100%);
-        padding: 20px;
+        background: linear-gradient(135deg, rgba(67,233,123,0.1) 0%, rgba(79,172,254,0.05) 100%);
+        padding: 25px;
         border-left: 5px solid #43e97b;
         border-radius: 12px;
-        color: #f0f0f0;
+        color: #333;
         margin: 15px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
     }
     
     .highlight {
-        background: linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(118,75,162,0.15) 100%);
-        padding: 20px;
+        background: linear-gradient(135deg, rgba(102,126,234,0.08) 0%, rgba(118,75,162,0.06) 100%);
+        padding: 25px;
         border-radius: 12px;
         border-left: 5px solid #667eea;
-        color: #f0f0f0;
+        color: #333;
         margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
     }
     
     .section-title {
-        color: white;
+        color: #222;
         font-size: 32px;
         font-weight: 900;
         margin-bottom: 25px;
@@ -101,12 +109,33 @@ st.markdown("""
     }
     
     .stTabs [data-baseweb="tab-list"] button {
-        color: #aaa;
+        color: #666;
         font-weight: 600;
     }
     
     .stTabs [aria-selected="true"] {
-        color: white !important;
+        color: #667eea !important;
+    }
+    
+    .stMetric {
+        background: white;
+    }
+    
+    /* Streamlit 기본 요소 색상 조정 */
+    .stMarkdown {
+        color: #333;
+    }
+    
+    p, li {
+        color: #555;
+    }
+    
+    h3 {
+        color: #222 !important;
+    }
+    
+    h4 {
+        color: #222 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -131,9 +160,9 @@ with st.sidebar:
 if page == "🎯 핵심 요약":
     # 헤더
     st.markdown("""
-    <div style="text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); border-radius: 20px; margin-bottom: 40px;">
+    <div style="text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); border-radius: 20px; margin-bottom: 40px; box-shadow: 0 8px 25px rgba(0,0,0,0.12);">
         <h1 style="color: white; font-size: 48px; margin: 0; font-weight: 900;">🧠 우울증 AI 조기 발견</h1>
-        <p style="color: rgba(255,255,255,0.9); font-size: 18px; margin: 10px 0 0 0;">데이터로 학생 정신건강 지키기</p>
+        <p style="color: rgba(255,255,255,0.95); font-size: 18px; margin: 10px 0 0 0;">데이터로 학생 정신건강 지키기</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -183,7 +212,7 @@ if page == "🎯 핵심 요약":
     with col1:
         st.markdown("""
         <div class="problem-box">
-            <h3 style="margin-top: 0;">🔴 문제</h3>
+            <h3 style="margin-top: 0; color: #c42c5b;">🔴 문제</h3>
             <p>• 청소년 자살이 사망원인 2위</p>
             <p>• 우울증 조기 발견 어려움</p>
             <p>• 코로나 이후 악화 추세</p>
@@ -193,7 +222,7 @@ if page == "🎯 핵심 요약":
     with col2:
         st.markdown("""
         <div class="solution-box">
-            <h3 style="margin-top: 0;">🟢 해결책</h3>
+            <h3 style="margin-top: 0; color: #2d9d78;">🟢 해결책</h3>
             <p>• AI가 자동 위험군 발견</p>
             <p>• 빠른 개입 가능</p>
             <p>• 생명 구할 수 있음</p>
@@ -202,7 +231,7 @@ if page == "🎯 핵심 요약":
     
     st.markdown("""
     <div class="highlight">
-        <strong>💡 핵심:</strong> AI가 SNS, 수면, 스트레스 등 12가지 생활 데이터를 분석해서 우울증 위험 학생을 미리 찾아낸다!
+        <strong style="color: #667eea; font-size: 16px;">💡 핵심:</strong> AI가 SNS, 수면, 스트레스 등 12가지 생활 데이터를 분석해서 우울증 위험 학생을 미리 찾아낸다!
     </div>
     """, unsafe_allow_html=True)
     
@@ -218,9 +247,11 @@ if page == "🎯 핵심 요약":
                  color='개선율 (%)',
                  color_continuous_scale=['#667eea', '#764ba2', '#f093fb'],
                  text='개선율 (%)',
-                 template='plotly_dark')
+                 template='plotly_white')
     fig.update_traces(textposition='outside')
-    fig.update_layout(height=350, showlegend=False, xaxis_title="", yaxis_title="개선율 (%)")
+    fig.update_layout(height=350, showlegend=False, xaxis_title="", yaxis_title="개선율 (%)",
+                     title_font=dict(size=18, color='#222'),
+                     font=dict(color='#333'))
     st.plotly_chart(fig, use_container_width=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -253,6 +284,7 @@ elif page == "❓ 문제 정의":
         with col1:
             st.markdown("""
             **청소년 정신건강 위기**
+            
             - 10-20%가 정신질환 보유
             - 우울증 계속 증가
             - 자살이 2번째 사망원인
@@ -262,40 +294,47 @@ elif page == "❓ 문제 정의":
         
         with col2:
             # 위기 시각화
-            crisis_data = {
+            crisis_data = pd.DataFrame({
                 ' ': ['정신질환\n있음', '정상'],
-                '비율 (%)': [15, 85]
-            }
+                '비율': [15, 85]
+            })
             fig = go.Figure(data=[go.Pie(
                 labels=crisis_data[' '],
-                values=crisis_data['비율 (%)'],
+                values=crisis_data['비율'],
                 marker=dict(colors=['#f5576c', '#667eea']),
                 textposition='inside'
             )])
-            fig.update_layout(height=300, template='plotly_dark', showlegend=False)
+            fig.update_layout(height=300, template='plotly_white', showlegend=False,
+                            font=dict(color='#333'))
             st.plotly_chart(fig, use_container_width=True)
     
     with tab2:
-        st.markdown("""
-        **AI로 조기 발견 시스템**
+        col1, col2 = st.columns([1, 1])
         
-        ✓ SNS, 수면, 스트레스 등 분석  
-        ✓ 위험 학생 자동 발견  
-        ✓ 빠른 개입 → 치료율 ↑  
-        ✓ 자살 예방 → 생명 보호  
-        """)
+        with col1:
+            st.markdown("""
+            **AI로 조기 발견 시스템**
+            
+            ✓ SNS, 수면, 스트레스 등 분석  
+            ✓ 위험 학생 자동 발견  
+            ✓ 빠른 개입 → 치료율 ↑  
+            ✓ 자살 예방 → 생명 보호  
+            """)
         
-        # 시간에 따른 개선
-        time_data = pd.DataFrame({
-            '시간 ': ['미진단', '1주', '1개월', '3개월'],
-            '치료율 (%)': [10, 35, 65, 90]
-        })
-        
-        fig = px.line(time_data, x='시간 ', y='치료율 (%)',
-                      markers=True, template='plotly_dark')
-        fig.update_traces(line=dict(color='#43e97b', width=4), marker=dict(size=10))
-        fig.update_layout(height=300, hovermode='x unified')
-        st.plotly_chart(fig, use_container_width=True)
+        with col2:
+            # 시간에 따른 개선
+            time_data = pd.DataFrame({
+                '시간': ['미진단', '1주', '1개월', '3개월'],
+                '치료율 (%)': [10, 35, 65, 90]
+            })
+            
+            fig = px.line(time_data, x='시간', y='치료율 (%)',
+                          markers=True, template='plotly_white')
+            fig.update_traces(line=dict(color='#43e97b', width=4), marker=dict(size=10))
+            fig.update_layout(height=300, hovermode='x unified',
+                            font=dict(color='#333'),
+                            title_font=dict(size=16, color='#222'))
+            st.plotly_chart(fig, use_container_width=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PAGE 3: 데이터 수집
@@ -392,8 +431,9 @@ elif page == "📊 데이터 수집":
         })
         fig = px.bar(sns_data, x='SNS 시간', y='학생 수',
                     color='학생 수', color_continuous_scale='Blues',
-                    template='plotly_dark')
-        fig.update_layout(height=300, showlegend=False, xaxis_title="", yaxis_title="명")
+                    template='plotly_white')
+        fig.update_layout(height=300, showlegend=False, xaxis_title="", yaxis_title="명",
+                        font=dict(color='#333'))
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
@@ -404,8 +444,9 @@ elif page == "📊 데이터 수집":
         })
         fig = px.pie(depression_data, names=' ', values='비율',
                     color_discrete_sequence=['#f5576c', '#667eea'],
-                    template='plotly_dark')
-        fig.update_layout(height=300, showlegend=True)
+                    template='plotly_white')
+        fig.update_layout(height=300, showlegend=True,
+                        font=dict(color='#333'))
         st.plotly_chart(fig, use_container_width=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -417,7 +458,7 @@ elif page == "🤖 모델 선택":
     
     st.markdown("""
     <div class="highlight">
-        <strong>❓ 이것은 "분류" 문제입니다</strong><br>
+        <strong style="color: #667eea; font-size: 16px;">❓ 이것은 "분류" 문제입니다</strong><br>
         우울증이 있다 / 없다 → 두 개 중 하나를 선택하는 것
     </div>
     """, unsafe_allow_html=True)
@@ -433,28 +474,30 @@ elif page == "🤖 모델 선택":
         '속도': [10, 8, 6, 5, 4]
     })
     
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        fig = px.scatter(model_data, x='정확도', y='속도', 
-                        size='정확도', text='모델',
-                        color='정확도',
-                        color_continuous_scale=['#667eea', '#764ba2', '#f093fb'],
-                        template='plotly_dark',
-                        size_max=60)
-        fig.update_traces(textposition='top center')
-        fig.update_layout(height=350, hovermode='closest',
-                         xaxis_title="정확도 (%)", yaxis_title="속도 (빠름→느림)")
-        st.plotly_chart(fig, use_container_width=True)
+    col1, col2 = st.columns([1, 1])
     
     with col1:
         fig = px.bar(model_data, x='모델', y='정확도',
                     color='정확도',
                     color_continuous_scale=['#667eea', '#764ba2', '#f093fb'],
-                    template='plotly_dark',
+                    template='plotly_white',
                     text='정확도')
         fig.update_traces(textposition='outside')
-        fig.update_layout(height=350, showlegend=False, yaxis_title="정확도 (%)", xaxis_title="")
+        fig.update_layout(height=350, showlegend=False, yaxis_title="정확도 (%)", xaxis_title="",
+                        font=dict(color='#333'),
+                        title_font=dict(size=16, color='#222'))
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        fig = px.bar(model_data, x='모델', y='속도',
+                    color='속도',
+                    color_continuous_scale=['#f093fb', '#764ba2', '#667eea'],
+                    template='plotly_white',
+                    text='속도')
+        fig.update_traces(textposition='outside')
+        fig.update_layout(height=350, showlegend=False, yaxis_title="속도 (낮을수록 빠름)", xaxis_title="",
+                        font=dict(color='#333'),
+                        title_font=dict(size=16, color='#222'))
         st.plotly_chart(fig, use_container_width=True)
     
     st.divider()
@@ -487,7 +530,7 @@ elif page == "🤖 모델 선택":
     
     st.markdown("""
     <div class="highlight">
-        <strong>💭 쉽게 말하면:</strong><br>
+        <strong style="color: #667eea; font-size: 16px;">💭 쉽게 말하면:</strong><br>
         Random Forest는 여러 의사가 각각 진단하고 투표로 결정하는 것처럼 작동한다.
         그래서 더 정확하고 신뢰할 수 있다!
     </div>
@@ -529,8 +572,8 @@ elif page == "🤖 모델 선택":
     
     st.markdown("""
     <div class="highlight">
-        <strong>⚠️ 가장 중요한 것:</strong><br>
-        <strong>재현율(Recall)이 높아야 한다!</strong><br>
+        <strong style="color: #c42c5b; font-size: 16px;">⚠️ 가장 중요한 것:</strong><br>
+        <strong style="color: #333;">재현율(Recall)이 높아야 한다!</strong><br>
         우울한 학생을 놓치는 것이 괜찮은 학생을 우울하다고 진단하는 것보다 훨씬 심각하다.
     </div>
     """, unsafe_allow_html=True)
@@ -545,8 +588,11 @@ elif page == "🤖 모델 선택":
     fig = px.bar(metrics_data, x='지표', y=['목표', '달성'],
                 barmode='group',
                 color_discrete_map={'목표': '#667eea', '달성': '#43e97b'},
-                template='plotly_dark')
-    fig.update_layout(height=350, hovermode='x unified', yaxis_title="점수")
+                template='plotly_white',
+                text_auto=True)
+    fig.update_layout(height=350, hovermode='x unified', yaxis_title="점수",
+                    font=dict(color='#333'),
+                    title_font=dict(size=16, color='#222'))
     st.plotly_chart(fig, use_container_width=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -566,4 +612,4 @@ with col2:
 with col3:
     st.info("📚 **패키지**\n\nstreamlit • pandas • plotly")
 
-st.markdown("<p style='text-align: center; color: #888; margin-top: 30px; font-size: 12px;'>🧠 청소년 정신건강 AI 프로젝트 | 2024</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #999; margin-top: 30px; font-size: 12px;'>🧠 청소년 정신건강 AI 프로젝트 | 2024</p>", unsafe_allow_html=True)
