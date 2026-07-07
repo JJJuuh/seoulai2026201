@@ -126,12 +126,12 @@ if data_loaded:
 
 
     # -----------------------------------------------------
-    # 3. 실시간 분석 결과 리포트 (글씨 하얗게 튜닝 및 동적 설명 추가)
+    # 3. 실시간 분석 결과 리포트
     # -----------------------------------------------------
     st.markdown("---")
     st.subheader("📊 실시간 분석 결과 리포트")
     
-    # 🌟 그래프 글씨를 하얀색(white)으로 만들기 위한 Matplotlib 글로벌 설정 변경 🌟
+    # 그래프 글씨를 하얀색(white)으로 렌더링하기 위한 Matplotlib 옵션 설정
     plt.rcParams['text.color'] = 'white'
     plt.rcParams['axes.labelcolor'] = 'white'
     plt.rcParams['xtick.color'] = 'white'
@@ -147,24 +147,34 @@ if data_loaded:
         "🔲 혼동 행렬 격자 점검"
     ])
     
-    # --- [탭 1] 모델별 성능 비교 ---
+    # --- [탭 1] 차이가 확연히 드러나도록 y축 다이내믹 줌인 + 라인 차트로 변경 ---
     with tab1:
         st.markdown("##### AI 모델별 성능 지표 비교 그래프")
         
-        plot_data = []
-        for name, info in results.items():
-            plot_data.append({"Model": name, "Metric": "Accuracy", "Score": info["accuracy"]})
-            plot_data.append({"Model": name, "Metric": "F1-Score", "Score": info["f1_score"]})
-        df_plot = pd.DataFrame(plot_data)
+        names = list(results.keys())
+        accs = [results[n]["accuracy"] for n in names]
+        f1s = [results[n]["f1_score"] for n in names]
+        
+        # 차이를 시각적으로 극대화하기 위해 현재 스코어 중 최소값 탐색 후 y축 하한선 설정
+        all_scores = accs + f1s
+        min_score = min(all_scores)
+        max_score = max(all_scores)
+        
+        # 미세한 변동폭을 반영한 하한/상한 단위 조정 마진 연산 (최소값보다 살짝 아래부터 줌인)
+        y_min = max(0.0, float(np.floor(min_score * 20) / 20) - 0.05) 
+        y_max = min(1.0, float(np.ceil(max_score * 20) / 20) + 0.05)
         
         fig1, ax1 = plt.subplots(figsize=(9, 4))
-        sns.barplot(data=df_plot, x="Model", y="Score", hue="Metric", palette="muted", ax=ax1)
-        ax1.set_ylim(0, 1.0)
+        
+        # 막대 대신 점과 선(Line & Marker) 플롯을 사용하여 높낮이 비교 극대화
+        ax1.plot(names, accs, marker='o', markersize=8, linewidth=2.5, label='Accuracy', color='#4e79a7')
+        ax1.plot(names, f1s, marker='s', markersize=8, linewidth=2.5, label='F1-Score', color='#f28e2b')
+        
+        ax1.set_ylim(y_min, y_max) # 연산된 다이내믹 줌인 y축 적용
         ax1.set_xlabel("AI Algorithms", color='white')
         ax1.set_ylabel("Performance Score", color='white')
         ax1.grid(False)
         
-        # 범례 글씨도 하얗게 지정
         legend = ax1.legend(facecolor='black', edgecolor='none')
         for text in legend.get_texts():
             text.set_color('white')
@@ -172,13 +182,13 @@ if data_loaded:
         sns.despine()
         st.pyplot(fig1)
         
-        # 📌 [동적 수치 반영 결과 설명]
+        # 동적 결과 설명
         best_acc_model = max(results, key=lambda k: results[k]["accuracy"])
         best_acc_val = results[best_acc_model]["accuracy"] * 100
         
-        st.success(f"📈 **실시간 그래프 분석 결과:** \n"
-                   f"현재 테스트 세트에서 가장 정확도가 높은 모델은 **{best_acc_model}**이며, "
-                   f"**{best_acc_val:.1f}%**의 예측 성공률을 기록하고 있습니다. 수치 조절에 따라 최적의 알고리즘 랭킹이 변동될 수 있습니다.")
+        st.success(f"틀린 그림 찾기 같던 그래프를 **y축 범위를 점수 밀집 구역({y_min*100:.0f}% ~ {y_max*100:.0f}%)으로 현미경처럼 확대**하여 시각화했습니다.\n\n"
+                   f"📈 **실시간 그래프 분석 결과:** \n"
+                   f"미세한 차이를 정밀 분석한 결과, 현재 설정 기준 가장 높은 정확도를 갱신한 우수 알고리즘은 **{best_acc_model}**({best_acc_val:.1f}%)입니다.")
 
     # --- [탭 2] 핵심 영향 요인 분석 ---
     with tab2:
@@ -199,7 +209,6 @@ if data_loaded:
         sns.despine()
         st.pyplot(fig2)
         
-        # 📌 [동적 수치 반영 결과 설명]
         max_idx = np.argmax(importances)
         top_feature = feature_labels_eng[max_idx]
         
@@ -227,8 +236,6 @@ if data_loaded:
         sns.despine()
         st.pyplot(fig3)
         
-        # 📌 [동적 수치 반영 결과 설명]
-        # 수면시간이 6시간 이하일 때와 7시간 이상일 때 예측값의 평균 트렌드 비교 연산
         low_sleep_pred = y_pred[X_test_df['sleep_hours'] <= 6.0].mean()
         high_sleep_pred = y_pred[X_test_df['sleep_hours'] > 6.0].mean()
         
@@ -242,16 +249,14 @@ if data_loaded:
         cm = results[selected_model_name]["confusion_matrix"]
         fig4, ax4 = plt.subplots(figsize=(6, 4))
         
-        # 히트맵 내부 숫자 글자색 조절을 위해 annot_kws 추가
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4, annot_kws={"color": "white"})
         ax4.set_xlabel("Predicted Label", color='white')
         ax4.set_ylabel("True Label", color='white')
         ax4.grid(False)
         st.pyplot(fig4)
         
-        # 📌 [동적 수치 반영 결과 설명]
         total_samples = np.sum(cm)
-        correct_samples = np.trace(cm) # 대각선 합 (정답 수)
+        correct_samples = np.trace(cm)
         
         st.success(f"🔲 **실시간 그래프 분석 결과:** \n"
                    f"전체 검증 데이터 {total_samples}건 중, 진한 파란색 대각선 격자에 안착하여 AI가 한 치의 오차도 없이 완벽하게 실제 스트레스 점수를 맞춘 샘플은 "
@@ -355,7 +360,6 @@ if data_loaded:
             fig5, ax5 = plt.subplots(figsize=(5, 3.8))
             original_df['Stress Group'] = np.where(original_df['stress_level'] >= 8, 'High Stress', 'Normal')
             
-            # 바이올린 플롯 내부 글씨 색상도 연동되도록 세팅
             sns.violinplot(
                 data=original_df, 
                 x='Stress Group', 
