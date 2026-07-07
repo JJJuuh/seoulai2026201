@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
 st.set_page_config(layout="wide", page_title="AI 정신건강 분석 대시보드", page_icon="🤖") 
 
-# 모던 스타일 고도화 CSS
+# 모던 스타일 고도화 CSS (여백 및 가독성 최적화)
 st.markdown("""
     <style>
         .block-container { padding-top: 2.5rem; padding-bottom: 2rem; }
@@ -23,20 +23,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🤖 4. 인공지능 모델링 및 평가 대시보드")
-st.markdown("<p style='font-size:16px; color:#b2bec3; margin-top:-10px;'>다양한 AI 알고리즘의 파라미터를 실시간으로 제어하며 청소년의 생활 패턴과 스트레스 지수(1~10) 간의 상관관계를 다각도로 분석합니다.</p>", unsafe_allow_html=True)
-
-with st.expander("ℹ️ [필독] 대시보드를 보기 전, AI 머신러닝 용어 가이드북 읽어보기"):
-    term_col1, term_col2 = st.columns(2)
-    with term_col1:
-        st.markdown("""
-        * **정확도 (Accuracy)**: 전체 데이터 중 AI가 맞춘 비율입니다.
-        * **F1-Score (Macro)**: AI가 1점부터 10점까지 모든 스트레스 단계를 치우침 없이 골고루 다 잘 맞추고 있는지 평가하는 점수입니다.
-        """)
-    with term_col2:
-        st.markdown("""
-        * **과적합 (Overfitting)**: AI가 학습 데이터 기출문제만 외워서 새로운 데이터에서 응용력이 떨어지는 상태입니다.
-        * **하이퍼파라미터 (Hyperparameter)**: 알고리즘의 성격을 결정하는 조절 나사입니다.
-        """)
+st.markdown("<p style='font-size:16px; color:#b2bec3; margin-top:-10px;'>알고리즘 조절 나사를 제어하며 청소년의 생활 패턴과 스트레스 지수(1~10) 간의 상관관계를 다각도로 분석합니다.</p>", unsafe_allow_html=True)
 
 # -----------------------------------------------------
 # 1. 화면 중간/상단 가로 제어판
@@ -63,7 +50,6 @@ with st.container(border=True):
 @st.cache_data
 def train_and_evaluate(trees, depth, c_val):
     df = pd.read_csv("Teen_Mental_Health_Dataset.csv")
-    
     df_encoded = pd.get_dummies(df, columns=['gender'], drop_first=True)
     
     features = ['daily_social_media_hours', 'sleep_hours', 'screen_time_before_sleep', 'physical_activity',
@@ -108,7 +94,7 @@ except FileNotFoundError:
 
 if data_loaded:
     # -----------------------------------------------------
-    # 3. AI 알고리즘 신뢰성 및 과적합 위험도 평가
+    # 3. AI 알고리즘 신뢰성 및 과적합 위험도 평가 (위험성 경고 강화 및 압축)
     # -----------------------------------------------------
     st.markdown("---")
     st.markdown("### ⚠️ AI 알고리즘 신뢰성 및 과적합(Overfitting) 위험도 평가")
@@ -121,29 +107,25 @@ if data_loaded:
     with st.container(border=True):
         risk_col1, risk_col2 = st.columns([1, 2])
         with risk_col1:
-            st.metric(label="🎯 학습-검증 정확도 격차(Gap)", value=f"{overfit_gap*100:.2f}%")
+            st.metric(label="🎯 훈련-검증 정확도 격차(Gap)", value=f"{overfit_gap*100:.2f}%")
             if overfit_gap >= 0.15:
-                st.error("🚨 **위험 수준: 과적합 상태 (Overfitting)**")
+                st.error("🚨 위험 수준: 과적합 상태 (Overfitting)")
             elif overfit_gap >= 0.05:
-                st.warning("⚠️ **위험 수준: 잠재적 위험 (Moderate)**")
-            elif train_acc < 0.40:
-                st.info("📉 **위험 수준: 과소적합 상태 (Underfitting)**")
+                st.warning("⚠️ 위험 수준: 잠재적 위험 (Moderate)")
             else:
-                st.success("✅ **위험 수준: 매우 안정적 (Optimal)**")
+                st.success("✅ 위험 수준: 안정적 (Optimal)")
                 
         with risk_col2:
-            st.markdown(f"<p style='font-size:15px; font-weight:600; color:#dfe6e9; margin-bottom:5px;'>🔍 {selected_model_name} 모델 진단 소견</p>", unsafe_allow_html=True)
+            st.markdown(f"**🔍 {selected_model_name} 모델 상태 판정**")
             if overfit_gap >= 0.15:
-                st.markdown(f"현재 설정된 수치는 **훈련 데이터에 모델이 과도하게 짜맞춰진 상태(과적합)**를 유발합니다. 나무 깊이를 줄이거나 규제를 주어 가지치기를 해야 실전 신뢰도가 올라갑니다.")
+                st.markdown(f"⚠️ **과적합 위험 경고:** 현재 모델은 훈련 점수({train_acc*100:.1f}%)만 압도적으로 높고 실전 점수({test_acc*100:.1f}%)는 떨어지는 **심각한 과적합** 상태입니다. 데이터의 소음까지 암기해 버렸으므로 제어판에서 규제를 주거나 깊이를 제한해 범용성을 복구해야 합니다.")
             elif overfit_gap >= 0.05:
-                st.markdown(f"훈련 정확도({train_acc*100:.1f}%)와 검증 정확도({test_acc*100:.1f}%) 사이에 약간의 괴리가 존재합니다. 복잡도 수치를 조금 깎아내려 완화하는 것이 좋습니다.")
-            elif train_acc < 0.40:
-                st.markdown("패턴을 아예 배우지 못한 과소적합 상태입니다. 제어판에서 AI가 깊게 공부할 수 있도록 허용치를 늘려주세요.")
+                st.markdown(f"훈련 데이터와 검증 데이터 간에 미세한 격차가 있습니다. 복잡도 수치를 조금 낮추면 밸런스가 향상됩니다.")
             else:
-                st.markdown(f"현재 `{selected_model_name}` 모델은 **최적의 일반화 밸런스**를 이루고 있습니다. 두 데이터셋의 스코어가 균형을 이루어 편향 없이 가장 완벽하게 분류해 낼 수 있는 견고한 상태입니다.")
+                st.markdown(f"훈련({train_acc*100:.1f}%)과 검증({test_acc*100:.1f}%)의 밸런스가 정교하게 맞물린 최적의 일반화 상태입니다. 실전 신뢰도가 매우 높습니다.")
 
     # -----------------------------------------------------
-    # 4. 실시간 분석 결과 리포트
+    # 4. 실시간 분석 결과 리포트 (예전의 직관적인 4개 탭 구조)
     # -----------------------------------------------------
     st.markdown("---")
     st.subheader("📊 실시간 분석 결과 리포트")
@@ -178,16 +160,13 @@ if data_loaded:
         ax1.plot(names, accs, marker='o', markersize=8, linewidth=2.5, label='Accuracy', color='#3498db')
         ax1.plot(names, f1s, marker='s', markersize=8, linewidth=2.5, label='F1-Score', color='#e67e22')
         ax1.set_ylim(y_min, y_max)
-        ax1.set_ylabel("Performance Score", color='white')
         sns.despine()
         legend1 = ax1.legend(facecolor='#2d3436', edgecolor='none')
         for text in legend1.get_texts(): text.set_color('white')
         st.pyplot(fig1)
         
         best_acc_model = max(results, key=lambda k: results[k]["accuracy"])
-        st.success(f"틀린 그림 찾기 같던 그래프를 **y축 범위를 점수 밀집 구역({y_min*100:.0f}% ~ {y_max*100:.0f}%)으로 현미경처럼 확대**하여 시각화했습니다.\n\n"
-                   f"📈 **실시간 그래프 분석 결과:** \n"
-                   f"미세한 차이를 정밀 분석한 결과, 현재 설정 기준 가장 높은 정확도를 갱신한 우수 알고리즘은 **{best_acc_model}**({results[best_acc_model]['accuracy']*100:.1f}%)입니다.")
+        st.info(f"📈 **실시간 스냅샷:** 현미경 줌인 범위({y_min*100:.0f}% ~ {y_max*100:.0f}%) 분석 결과, 최종 검증 성능이 가장 우수한 알고리즘은 **{best_acc_model}**입니다.")
 
     # --- [탭 2] 핵심 영향 요인 분석 ---
     with tab2:
@@ -209,9 +188,7 @@ if data_loaded:
         st.pyplot(fig2)
         
         top_feature = core_labels[np.argmax(importances)]
-        st.success(f"🔑 **실시간 그래프 분석 결과:** \n"
-                   f"현재 제어판 수치 기준으로 `{selected_model_name}`이 청소년의 스트레스를 예측할 때 "
-                   f"가장 결정적인 단서로 지목한 생활 패턴은 **{top_feature}** 입니다. 이 요인의 변화가 예측 결과에 가장 큰 변동을 줍니다.")
+        st.info(f"🔑 **실시간 스냅샷:** 현재 입력 제어판 기준으로 AI가 스트레스 지수 분류의 가장 결정적인 변수로 타겟팅한 항목은 **{top_feature}** 입니다.")
 
     # --- [탭 3] SNS사용시간별 예측 경향 ---
     with tab3:
@@ -231,9 +208,7 @@ if data_loaded:
         
         low_sns_pred = y_pred[X_test_df['daily_social_media_hours'] <= 3.0].mean()
         high_sns_pred = y_pred[X_test_df['daily_social_media_hours'] > 5.0].mean()
-        st.success(f"📈 **실시간 그래프 분석 결과:** \n"
-                   f"주황색 AI 예측 트렌드 선의 흐름을 분석한 결과, 하루 SNS 이용 시간이 3시간 이하인 집단의 예측 스트레스 평균은 **{low_sns_pred:.1f}점**인 반면, "
-                   f"5시간을 초과하여 장시간 몰입할 때의 예측 평균은 **{high_sns_pred:.1f}점**으로 뚜렷하게 점수가 상승하는 경향성(우하향)을 실시간으로 그려내고 있습니다.")
+        st.info(f"📈 **실시간 스냅샷:** SNS 이용량이 3시간 이하일 때 예측 평균은 **{low_sns_pred:.1f}점**이며, 5시간 초과 시 예측 평균은 **{high_sns_pred:.1f}점**으로 뚜렷이 우상향합니다.")
 
     # --- [탭 4] 혼동 행렬 격자 점검 ---
     with tab4:
@@ -247,9 +222,7 @@ if data_loaded:
         
         total_samples = np.sum(cm)
         correct_samples = np.trace(cm)
-        st.success(f"🔲 **실시간 그래프 분석 결과:** \n"
-                   f"전체 검증 데이터 {total_samples}건 중, 진한 파란색 대각선 격자에 안착하여 AI가 한 치의 오차도 없이 완벽하게 실제 스트레스 점수를 맞춘 샘플은 "
-                   f"총 **{correct_samples}건**입니다.")
+        st.info(f"🔲 **실시간 스냅샷:** 검증 표본 {total_samples}건 중 정중앙 대각선 격자에 일치하여 오차 없이 정확히 분류해 낸 데이터는 총 **{correct_samples}건**입니다.")
 
     st.markdown("<p style='font-size:15px; font-weight:600; color:#dfe6e9; margin-bottom:-5px; margin-top:20px;'>📋 전 알고리즘 성능 스코어보드 요약</p>", unsafe_allow_html=True)
     st.table(pd.DataFrame([
@@ -261,29 +234,6 @@ if data_loaded:
         }
         for name, info in results.items()
     ]))
-
-    # -----------------------------------------------------
-    # 🌟 [신규 추가] 왜 Random Forest 모델이 최종 채택되었는가? (선정 타당성 보고서)
-    # -----------------------------------------------------
-    st.markdown("---")
-    st.markdown("### 🏆 왜 이 프로젝트의 최적 알고리즘으로 'Random Forest'를 선정했을까요?")
-    
-    with st.container(border=True):
-        reason_col1, reason_col2 = st.columns(2)
-        with reason_col1:
-            st.markdown("""
-            * **비선형적 다중 결합 패턴 분석의 최강자**
-                * 청소년의 스트레스(1~10)는 단순히 'SNS를 많이 하면 선형적으로 정비례해서 증가'하는 단순한 구조가 아닙니다. "성적이 낮으면서 수면도 부족할 때 발생하는 시너지 악화"처럼 **여러 복잡한 생활 패턴의 교차 조건**을 찾아내야 합니다. 수많은 독립적인 나무(Tree)를 심는 랜덤 포레스트는 이러한 비선형적 상호작용 정보를 가장 유연하게 학습합니다.
-            * **데이터 불균형 및 다중 클래스(1~10점) 예측의 안정성**
-                * 실제 청소년 설문 조사 데이터는 특정 스트레스 점수(예: 5점이나 6점)에 샘플이 몰려있고 극단적인 점수(1점이나 10점)는 부족한 **데이터 불균형**이 심합니다. 선형 분류 모델이나 단일 의사결정나무는 다수 클래스에 편향되기 쉽지만, 랜덤 포레스트는 **배깅(Bagging) 기법과 다수결 투표**를 통해 불균형 속에서도 모든 점수대를 골고루 가장 잘 분류해 냅니다.
-            """)
-        with reason_col2:
-            st.markdown("""
-            * **탁월한 과적합(Overfitting) 방어력**
-                * 단일 의사결정나무(Decision Tree)는 복잡한 청소년 데이터의 노이즈까지 전부 외워버려 쉽게 과적합에 빠집니다. 반면, 랜덤 포레스트는 무작위로 복원 추출된 데이터 셋군과 무작위 피처 조합으로 수백 개의 나무를 독립적으로 빌드한 뒤 평균을 내기 때문에, 모델의 복잡도가 높아져도 **과적합 위험도가 매우 낮고 실전 응용(일반화) 능력이 압도적**입니다.
-            * **피처 중요도(Feature Importance) 도출 가능**
-                * 딥러닝과 달리 내부 연산이 끝난 후 **"어떤 생활 지표(수면, SNS 등)가 스트레스 유발에 몇 %의 영향력을 행사했는지"** 수치적 중요도를 명확하게 제공합니다. 이는 단순 예측을 넘어 '청소년 디지털 웰빙 가이드라인'이라는 리포트 결론을 도출하는 데 학술적으로 가장 명확한 근거 정보가 됩니다.
-            """)
 
     # -----------------------------------------------------
     # 5. 실시간 스트레스 지수 예측기 및 입체적 분석 리포트
@@ -346,7 +296,7 @@ if data_loaded:
             st.markdown("#### 💡 AI 마인드 케어 처방 조언")
             care_advice = ""
             if predicted_stress >= 8:
-                care_advice = "인공지능 모델 검진 결과 생활 불균형과 높은 내부 불안 수치가 결합된 위험 상태입니다. 모바일 디톡스와 수면 확보가 시급하며, 혼자 앓기보다 교내 Wee 클래스나 전문 상담 기관의 노크를 강력 권장합니다."
+                care_advice = "생활 패턴의 균열과 심리적 불안도 수치가 동시에 위험 신호를 보내고 있습니다. 모바일 디톡스와 수면 확보가 시급하며, 교내 Wee 클래스나 전문 상담 기관의 노크를 강력 권장합니다."
             elif predicted_stress >= 4:
                 care_advice = "불규칙한 디지털 사용 습관을 제어하면 빠르게 안정군으로 유턴할 수 있는 주의 단계입니다. 취침 전 스마트폰 오프 습관과 주 3회 땀 흘리는 운동을 믹스해 보세요."
             else:
@@ -382,7 +332,7 @@ if data_loaded:
             
             with ins_col1:
                 st.markdown("""
-                * **심리적 요인과 디지털 이용 패턴의 상호 결합**: 인공지능이 만 명 이상의 청소년 데이터를 군집 분석한 거시적 정보에 따르면, 고스트레스 집단은 학업 스트레스 자체보다 높은 불안 수준이 야간 전자기기 과의존 Habit과 결합할 때 폭발적으로 늘어나는 양상을 띱니다.
+                * **심리적 요인과 디지털 이용 패턴의 상호 결합**: 빅데이터 분석을 종합하면 스트레스 고위험 청소년 군은 과도한 야간 모바일 스크린 노출과 수면 저하의 파괴적인 인과 고리에 전형적으로 묶여 있습니다.
                 * **수면의 보편적 보호막 효과**: 나이나 성별, 성적 등 모든 환경적 격차를 불문하고 '충분한 수면 시간 확보'는 청소년 정신 건강 방어선을 사수하는 데 있어 AI 통계 모형이 검증한 가장 강력하고 보편적인 공통 핵심 인자입니다.
                 """)
             with ins_col2:
@@ -394,3 +344,16 @@ if data_loaded:
                 sns.despine()
                 st.pyplot(fig5)
                 st.markdown("<p style='font-size:12px; color:#b2bec3; text-align:center;'>주황/빨간색 고위험군의 분포 부피가 5~6시간 구역에 뚱뚱하게 밀집되어 있어, 수면 시간 확보가 스트레스 방어의 최우선 과제임을 AI 통계 분석이 직관적으로 증명합니다.</p>", unsafe_allow_html=True)
+
+    # -----------------------------------------------------
+    # 6. [위치 변경 & 축소 반영] 왜 Random Forest 모델이 최종 채택되었는가? (예측기 아래 배치 및 실행 전 상시 노출)
+    # -----------------------------------------------------
+    st.markdown("---")
+    st.markdown("### 🏆 왜 이 프로젝트의 최적 알고리즘으로 'Random Forest'를 채택했을까요?")
+    
+    with st.container(border=True):
+        st.markdown("""
+        * **비선형적 다중 결합 패턴 분석에 강함**: SNS 사용량, 수면 부족, 불안도 등이 복합적으로 시너지를 내며 악화되는 비선형적 상호작용 분류 규칙을 가장 정교하게 탐색합니다.
+        * **데이터 불균형 제어 및 오버피팅 예방**: 수백 개의 나무 모델을 심어 다수결 투표(Bagging) 방식을 사용하기 때문에, 특정 스트레스 수치에 데이터가 몰려있는 불균형 환경에서도 치우침 없는 밸런스 점수(F1-Score)를 도출합니다.
+        * **설명 가능한 AI 피드백 제공**: 학습 연산이 종료된 후 어떤 도메인 요소가 스트레스 예측에 큰 지분을 가졌는지 '피처 중요도(Feature Importance)'를 수치화하여 도출할 수 있는 강력한 학술적 근거를 제공합니다.
+        """)
