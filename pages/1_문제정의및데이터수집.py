@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="청소년 정신건강 AI 프로젝트",
@@ -100,13 +99,6 @@ st.markdown("""
         border-bottom: 3px solid #667eea;
     }
     
-    .two-column {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-        margin-bottom: 30px;
-    }
-    
     .info-card {
         background: white;
         padding: 20px;
@@ -179,13 +171,6 @@ st.markdown("""
         margin: 0;
     }
     
-    .metric-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
     .metric-card {
         background: white;
         padding: 20px;
@@ -219,6 +204,7 @@ st.markdown("""
         width: 100%;
         border-collapse: collapse;
         margin: 15px 0;
+        font-size: 13px;
     }
 
     .simple-table th {
@@ -227,13 +213,11 @@ st.markdown("""
         padding: 12px;
         text-align: left;
         font-weight: bold;
-        font-size: 13px;
     }
 
     .simple-table td {
         padding: 12px;
         border-bottom: 1px solid #e0e0e0;
-        font-size: 13px;
     }
 
     .simple-table tr:hover {
@@ -242,7 +226,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ===== 메인 헤더 =====
+# 메인 헤더
 st.markdown("""
 <div class="main-header">
     <h1>우울해하는 학생들을 미리 찾아내는 AI</h1>
@@ -250,7 +234,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== 핵심 수치 =====
+# 핵심 수치
 st.markdown("""
 <div class="grid-container">
     <div class="grid-item item1">
@@ -276,7 +260,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== 1. 문제 정의 =====
+# 1. 문제 정의
 st.markdown("""
 <div class="section">
     <div class="section-title">1. 왜 이 문제를 풀어야 할까?</div>
@@ -315,7 +299,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== 2. 데이터 =====
+# 2. 데이터
 st.markdown("""
 <div class="section">
     <div class="section-title">2. 어떤 데이터를 봤을까?</div>
@@ -369,7 +353,7 @@ with col2:
         <br>
         이렇게 판단하는 거다.</p>
     </div>
-    """, southwest_allow_html=True)
+    """, unsafe_allow_html=True)
 
 st.markdown("""
 <div class="highlight-box">
@@ -377,7 +361,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== 3. 모델 선택 =====
+# 3. 모델 선택
 st.markdown("""
 <div class="section">
     <div class="section-title">3. AI 모델 선택 (왜 이것을 골랐을까?)</div>
@@ -392,7 +376,7 @@ st.markdown("""
 
 st.subheader("여러 모델들을 비교해봤다")
 
-comparison_html = """
+table_html = """
 <table class="simple-table">
     <tr>
         <th>모델 이름</th>
@@ -401,39 +385,39 @@ comparison_html = """
         <th>단점</th>
     </tr>
     <tr>
-        <td>Logistic Regression<br>(로지스틱 회귀)</td>
+        <td>Logistic Regression</td>
         <td>78%</td>
         <td>간단함, 빠름</td>
         <td>복잡한 패턴 못 찾음</td>
     </tr>
     <tr>
-        <td>Decision Tree<br>(의사결정 나무)</td>
+        <td>Decision Tree</td>
         <td>75%</td>
         <td>이해하기 쉬움</td>
         <td>데이터에 너무 딱 맞아서 새 데이터에 약함</td>
     </tr>
     <tr style="background: #f0f9ff;">
-        <td><b>Random Forest</b><br>(우리 선택)</td>
+        <td><b>Random Forest</b></td>
         <td><b>83%</b></td>
-        <td><b>높은 정확도, 어떤 요인이 중요한지 알 수 있음</b></td>
+        <td><b>높은 정확도, 요인 파악 가능</b></td>
         <td>좀 느림</td>
     </tr>
     <tr style="background: #f0fff4;">
-        <td><b>XGBoost</b><br>(검증용)</td>
+        <td><b>XGBoost</b></td>
         <td><b>86%</b></td>
         <td><b>가장 높은 정확도</b></td>
         <td>복잡함</td>
     </tr>
     <tr>
-        <td>SVM<br>(서포트 벡터 머신)</td>
+        <td>SVM</td>
         <td>80%</td>
         <td>효율적</td>
-        <td>왜 이렇게 판정했는지 설명하기 어려움</td>
+        <td>판정 이유 설명 어려움</td>
     </tr>
 </table>
 """
 
-st.markdown(comparison_html, unsafe_allow_html=True)
+st.markdown(table_html, unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
@@ -466,7 +450,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== 4. 평가 지표 =====
+# 4. 평가 지표
 st.markdown("""
 <div class="section">
     <div class="section-title">4. AI가 잘 작동하는지 어떻게 확인할까?</div>
@@ -501,7 +485,7 @@ with col3:
 
 st.subheader("각 지표가 뭐하는 건데?")
 
-explanation_html = """
+explanation_table = """
 <table class="simple-table">
     <tr>
         <th>항목</th>
@@ -531,7 +515,7 @@ explanation_html = """
 </table>
 """
 
-st.markdown(explanation_html, unsafe_allow_html=True)
+st.markdown(explanation_table, unsafe_allow_html=True)
 
 st.markdown("""
 <div class="highlight-box">
@@ -539,7 +523,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== 5. 작동 방식 =====
+# 5. 작동 방식
 st.markdown("""
 <div class="section">
     <div class="section-title">5. AI를 어떻게 만들까?</div>
@@ -566,7 +550,7 @@ for step in steps:
     </div>
     """, unsafe_allow_html=True)
 
-# ===== 6. 기대 효과 =====
+# 6. 기대 효과
 st.markdown("""
 <div class="section">
     <div class="section-title">6. 이걸 만들면 뭐가 좋을까?</div>
@@ -631,7 +615,7 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-# ===== 7. 한계 =====
+# 7. 한계
 st.markdown("""
 <div class="section">
     <div class="section-title">7. 근데 이것만으로 부족한 점들</div>
@@ -664,7 +648,7 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
 
-# ===== 8. 주의사항 =====
+# 8. 주의사항
 st.markdown("""
 <div class="section">
     <div class="section-title">8. 꼭 기억할 것</div>
@@ -680,7 +664,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== 로드맵 =====
+# 9. 로드맵
 st.markdown("""
 <div class="section">
     <div class="section-title">9. 이제부터 뭘 할 거야?</div>
