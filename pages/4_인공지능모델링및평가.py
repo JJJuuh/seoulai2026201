@@ -37,7 +37,7 @@ with control_col4:
 
 
 # -----------------------------------------------------
-# 데이터 사전 연산 함수 (위치 이동 처리를 위해 상단 배치)
+# 데이터 사전 연산 함수
 # -----------------------------------------------------
 @st.cache_data
 def train_and_evaluate(trees, depth, c_val):
@@ -86,7 +86,7 @@ except FileNotFoundError:
 
 if data_loaded:
     # -----------------------------------------------------
-    # 2. [위치 변경] AI 알고리즘 신뢰성 및 과적합 위험도 평가
+    # 2. AI 알고리즘 신뢰성 및 과적합 위험도 평가
     # -----------------------------------------------------
     st.markdown("---")
     st.markdown("### ⚠️ AI 알고리즘 신뢰성 및 과적합(Overfitting) 위험도 평가")
@@ -126,14 +126,19 @@ if data_loaded:
 
 
     # -----------------------------------------------------
-    # 3. 실시간 분석 결과 리포트 (탭 구성 및 소견 보강)
+    # 3. 실시간 분석 결과 리포트 (글씨 하얗게 튜닝 및 동적 설명 추가)
     # -----------------------------------------------------
     st.markdown("---")
     st.subheader("📊 실시간 분석 결과 리포트")
     
-    sns.set_style("white")
+    # 🌟 그래프 글씨를 하얀색(white)으로 만들기 위한 Matplotlib 글로벌 설정 변경 🌟
+    plt.rcParams['text.color'] = 'white'
+    plt.rcParams['axes.labelcolor'] = 'white'
+    plt.rcParams['xtick.color'] = 'white'
+    plt.rcParams['ytick.color'] = 'white'
     plt.rcParams['axes.facecolor'] = 'none'
     plt.rcParams['figure.facecolor'] = 'none'
+    sns.set_style("white")
 
     tab1, tab2, tab3, tab4 = st.tabs([
         "🥇 모델별 성능 비교", 
@@ -142,11 +147,10 @@ if data_loaded:
         "🔲 혼동 행렬 격자 점검"
     ])
     
-    # --- [탭 1] 확연하게 비교되도록 전면 리팩토링한 그룹 바 차트 ---
+    # --- [탭 1] 모델별 성능 비교 ---
     with tab1:
         st.markdown("##### AI 모델별 성능 지표 비교 그래프")
         
-        # Seaborn 데이터프레임 구조로 변환하여 명확한 그룹화 유도
         plot_data = []
         for name, info in results.items():
             plot_data.append({"Model": name, "Metric": "Accuracy", "Score": info["accuracy"]})
@@ -154,18 +158,27 @@ if data_loaded:
         df_plot = pd.DataFrame(plot_data)
         
         fig1, ax1 = plt.subplots(figsize=(9, 4))
-        # 확연한 비교를 위한 도표 렌더링
         sns.barplot(data=df_plot, x="Model", y="Score", hue="Metric", palette="muted", ax=ax1)
         ax1.set_ylim(0, 1.0)
-        ax1.set_xlabel("AI Algorithms")
-        ax1.set_ylabel("Performance Score")
+        ax1.set_xlabel("AI Algorithms", color='white')
+        ax1.set_ylabel("Performance Score", color='white')
         ax1.grid(False)
+        
+        # 범례 글씨도 하얗게 지정
+        legend = ax1.legend(facecolor='black', edgecolor='none')
+        for text in legend.get_texts():
+            text.set_color('white')
+            
         sns.despine()
         st.pyplot(fig1)
         
-        # [추가 내용] 그래프 하단 요약 가이드
-        st.info("💡 **이 그래프로 알 수 있는 것:** 3가지 알고리즘 중 어떤 AI가 청소년의 스트레스를 가장 균형 있게 맞추는지 확인합니다. "
-                "단순 정확도(Accuracy)뿐만 아니라 다중 클래스 밸런스를 보는 F1-Score 막대가 높을수록 실전 성능이 완벽함을 뜻합니다.")
+        # 📌 [동적 수치 반영 결과 설명]
+        best_acc_model = max(results, key=lambda k: results[k]["accuracy"])
+        best_acc_val = results[best_acc_model]["accuracy"] * 100
+        
+        st.success(f"📈 **실시간 그래프 분석 결과:** \n"
+                   f"현재 테스트 세트에서 가장 정확도가 높은 모델은 **{best_acc_model}**이며, "
+                   f"**{best_acc_val:.1f}%**의 예측 성공률을 기록하고 있습니다. 수치 조절에 따라 최적의 알고리즘 랭킹이 변동될 수 있습니다.")
 
     # --- [탭 2] 핵심 영향 요인 분석 ---
     with tab2:
@@ -181,13 +194,18 @@ if data_loaded:
             importances = np.abs(current_model.coef_[0])[:4] 
             sns.barplot(x=importances, y=feature_labels_eng, ax=ax2, palette="flare")
             
-        ax2.set_xlabel("Importance")
+        ax2.set_xlabel("Importance", color='white')
         ax2.grid(False)
         sns.despine()
         st.pyplot(fig2)
         
-        # [추가 내용] 그래프 하단 요약 가이드
-        st.info("💡 **이 그래프로 알 수 있는 것:** 인공지능이 스트레스 지수(1~10)를 판단할 때 **무슨 항목을 가장 치명적인 원인으로 보았는지** 가중치 순위를 나타냅니다. 막대가 길수록 스트레스 예측의 핵심 열쇠가 되는 생활 패턴입니다.")
+        # 📌 [동적 수치 반영 결과 설명]
+        max_idx = np.argmax(importances)
+        top_feature = feature_labels_eng[max_idx]
+        
+        st.success(f"🔑 **실시간 그래프 분석 결과:** \n"
+                   f"현재 제어판 수치 기준으로 `{selected_model_name}`이 청소년의 스트레스를 예측할 때 "
+                   f"가장 결정적인 단서로 지목한 생활 패턴은 **{top_feature}** 입니다. 이 요인의 변화가 예측 결과에 가장 큰 변동을 줍니다.")
 
     # --- [탭 3] 수면시간별 예측 경향 ---
     with tab3:
@@ -198,29 +216,46 @@ if data_loaded:
         fig3, ax3 = plt.subplots(figsize=(8, 4))
         sns.scatterplot(x=X_test_df['sleep_hours'], y=y_true, alpha=0.4, label='Actual Data', color='gray', ax=ax3)
         sns.lineplot(x=X_test_df['sleep_hours'], y=y_pred, color='red', marker='o', label='AI Predict Trend', ax=ax3, errorbar=None)
-        ax3.set_xlabel("Sleep Hours")
-        ax3.set_ylabel("Stress Level (1~10)")
-        ax3.legend()
+        ax3.set_xlabel("Sleep Hours", color='white')
+        ax3.set_ylabel("Stress Level (1~10)", color='white')
+        
+        legend3 = ax3.legend(facecolor='black', edgecolor='none')
+        for text in legend3.get_texts():
+            text.set_color('white')
+            
         ax3.grid(False)
         sns.despine()
         st.pyplot(fig3)
         
-        # [추가 내용] 그래프 하단 요약 가이드
-        st.info("💡 **이 그래프로 알 수 있는 것:** 실제 청소년 데이터(회색 점)의 흐름 위를 달리는 **AI의 예측 트렌드선(빨간 선)**입니다. 수면 시간이 감소함에 따라 예측 스트레스선이 계단식으로 우상향하는지, 모형의 예측 합리성을 진단할 수 있습니다.")
+        # 📌 [동적 수치 반영 결과 설명]
+        # 수면시간이 6시간 이하일 때와 7시간 이상일 때 예측값의 평균 트렌드 비교 연산
+        low_sleep_pred = y_pred[X_test_df['sleep_hours'] <= 6.0].mean()
+        high_sleep_pred = y_pred[X_test_df['sleep_hours'] > 6.0].mean()
+        
+        st.success(f"📈 **실시간 그래프 분석 결과:** \n"
+                   f"빨간색 AI 예측 트렌드 선의 흐름을 분석한 결과, 수면 시간이 6시간 이하일 때 스트레스 지수 예측치 평균은 **{low_sleep_pred:.1f}점**인 반면, "
+                   f"6시간을 초과하여 충분히 잘 때의 예측 평균은 **{high_sleep_pred:.1f}점**으로 뚜렷하게 감소하는 경향성(우하향)을 실시간으로 그려내고 있습니다.")
 
     # --- [탭 4] 혼동 행렬 격자 점검 ---
     with tab4:
         st.markdown(f"##### {selected_model_name} 혼동 행렬 격자 그래프")
         cm = results[selected_model_name]["confusion_matrix"]
         fig4, ax4 = plt.subplots(figsize=(6, 4))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4)
-        ax4.set_xlabel("Predicted Label")
-        ax4.set_ylabel("True Label")
+        
+        # 히트맵 내부 숫자 글자색 조절을 위해 annot_kws 추가
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4, annot_kws={"color": "white"})
+        ax4.set_xlabel("Predicted Label", color='white')
+        ax4.set_ylabel("True Label", color='white')
         ax4.grid(False)
         st.pyplot(fig4)
         
-        # [추가 내용] 그래프 하단 요약 가이드
-        st.info("💡 **이 그래프로 알 수 있는 것:** 대각선 정중앙 칸에 숫자가 가득 집중될수록 인공지능이 실제 스트레스 지수(True)를 정확하게 짚어내었음을 뜻합니다. 대각선을 벗어난 오답 칸을 보며 AI가 어떤 점수대 사이에서 혼동을 겪는지 추적합니다.")
+        # 📌 [동적 수치 반영 결과 설명]
+        total_samples = np.sum(cm)
+        correct_samples = np.trace(cm) # 대각선 합 (정답 수)
+        
+        st.success(f"🔲 **실시간 그래프 분석 결과:** \n"
+                   f"전체 검증 데이터 {total_samples}건 중, 진한 파란색 대각선 격자에 안착하여 AI가 한 치의 오차도 없이 완벽하게 실제 스트레스 점수를 맞춘 샘플은 "
+                   f"총 **{correct_samples}건**입니다. 나머지 칸에 적힌 숫자들이 AI가 한두 단계씩 헷갈려한 오답 분과 영역입니다.")
 
     # 하단 스코어 요약 보드
     st.markdown("---")
@@ -320,6 +355,7 @@ if data_loaded:
             fig5, ax5 = plt.subplots(figsize=(5, 3.8))
             original_df['Stress Group'] = np.where(original_df['stress_level'] >= 8, 'High Stress', 'Normal')
             
+            # 바이올린 플롯 내부 글씨 색상도 연동되도록 세팅
             sns.violinplot(
                 data=original_df, 
                 x='Stress Group', 
@@ -328,8 +364,8 @@ if data_loaded:
                 inner='quartile', 
                 ax=ax5
             )
-            ax5.set_xlabel("Stress Group Classification")
-            ax5.set_ylabel("Sleep Hours")
+            ax5.set_xlabel("Stress Group Classification", color='white')
+            ax5.set_ylabel("Sleep Hours", color='white')
             ax5.grid(False)
             sns.despine()
             st.pyplot(fig5)
