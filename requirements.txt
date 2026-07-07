@@ -11,3 +11,4 @@ statsmodels>=0.14.0
 streamlit
 matplotlib
 seaborn
+plotly>=5.18.0
