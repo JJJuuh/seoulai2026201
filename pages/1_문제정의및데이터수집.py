@@ -1,21 +1,18 @@
 """
-🧠 청소년 정신건강 AI 프로젝트
+청소년 정신건강 AI 프로젝트
 문제 정의, 데이터 수집, 분류 모델 선정 논리
 
-GOAT Design with Premium Effects
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 Required packages:
-  • streamlit==1.28.1
-  • pandas==2.0.3
-  • numpy==1.24.3
-  • plotly==5.17.0
+- streamlit==1.28.1
+- pandas==2.0.3
+- numpy==1.24.3
+- plotly==5.17.0
 
 Installation:
-  pip install streamlit==1.28.1 pandas==2.0.3 numpy==1.24.3 plotly==5.17.0
+    pip install streamlit==1.28.1 pandas==2.0.3 numpy==1.24.3 plotly==5.17.0
 
 Run:
-  streamlit run app.py
+    streamlit run app.py
 """
 
 import streamlit as st
@@ -28,42 +25,30 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# GOAT DESIGN STYLES - 멋지고 세련된 디자인
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap');
-    
     * {
         margin: 0;
         padding: 0;
-        font-family: 'Poppins', sans-serif;
     }
     
-    /* ━━━━━━━━━━━━━━ 배경 - 프리미엄 그래디언트 ━━━━━━━━━━━━━━ */
+    /* 배경 */
     html, body, [data-testid="stAppViewContainer"] {
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         min-height: 100vh;
     }
     
-    /* ━━━━━━━━━━━━━━ 메인 헤더 - 초프리미엄 ━━━━━━━━━━━━━━ */
+    /* 메인 헤더 - 프리미엄 디자인 */
     .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-        padding: 120px 50px;
-        border-radius: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 100px 40px;
+        border-radius: 24px;
         color: white;
         text-align: center;
-        margin: 40px 20px 100px 20px;
-        box-shadow: 
-            0 50px 120px rgba(102, 126, 234, 0.45),
-            0 0 80px rgba(240, 147, 251, 0.3),
-            inset 0 1px 0 rgba(255,255,255,0.2);
+        margin: 30px 0 80px 0;
+        box-shadow: 0 30px 80px rgba(102, 126, 234, 0.35);
         position: relative;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
     }
     
     .main-header::before {
@@ -73,75 +58,59 @@ st.markdown("""
         left: 0;
         right: 0;
         bottom: 0;
-        background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.2) 0%, transparent 50%);
+        background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.15) 0%, transparent 50%);
         pointer-events: none;
     }
     
     .main-header::after {
         content: '';
         position: absolute;
-        top: -100px;
-        right: -100px;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
         border-radius: 50%;
-        animation: float 20s ease-in-out infinite;
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) scale(1); }
-        50% { transform: translateY(-30px) scale(1.1); }
     }
     
     .main-header h1 {
-        font-size: 62px;
-        margin-bottom: 20px;
+        font-size: 56px;
+        margin-bottom: 18px;
         font-weight: 900;
         position: relative;
         z-index: 1;
-        letter-spacing: -1px;
-        line-height: 1.1;
-        background: linear-gradient(120deg, #ffffff 0%, #f0f0f0 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+        letter-spacing: -0.5px;
+        line-height: 1.2;
     }
     
     .main-header p {
-        font-size: 26px;
-        opacity: 0.98;
+        font-size: 24px;
+        opacity: 0.95;
         position: relative;
         z-index: 1;
         font-weight: 300;
-        letter-spacing: 1px;
-        font-family: 'Playfair Display', serif;
+        letter-spacing: 0.5px;
     }
     
-    /* ━━━━━━━━━━━━━━ 그리드 - 마스터피스 ━━━━━━━━━━━━━━ */
+    /* 그리드 컨테이너 - 프리미엄 */
     .grid-container {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 35px;
-        margin-bottom: 120px;
+        gap: 30px;
+        margin-bottom: 100px;
         padding: 0 20px;
     }
     
     .grid-item {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
-        padding: 50px 35px;
-        border-radius: 25px;
-        box-shadow: 
-            0 25px 60px rgba(0,0,0,0.15),
-            0 0 40px rgba(102, 126, 234, 0.1),
-            inset 0 1px 0 rgba(255,255,255,0.8);
-        border-top: 8px solid;
+        background: white;
+        padding: 40px 30px;
+        border-radius: 20px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.08);
+        border-top: 6px solid;
         text-align: center;
-        transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         cursor: pointer;
         position: relative;
-        border: 1px solid rgba(255,255,255,0.5);
     }
     
     .grid-item::before {
@@ -151,64 +120,44 @@ st.markdown("""
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, transparent 100%);
-        border-radius: 25px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 100%);
+        border-radius: 20px;
         opacity: 0;
-        transition: opacity 0.7s;
-    }
-    
-    .grid-item::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-        opacity: 0;
-        transition: opacity 0.7s;
+        transition: opacity 0.5s;
     }
     
     .grid-item:hover {
-        transform: translateY(-20px) scale(1.05) rotateY(-2deg);
-        box-shadow: 
-            0 40px 100px rgba(0,0,0,0.2),
-            0 0 60px rgba(102, 126, 234, 0.25);
+        transform: translateY(-16px) scale(1.03);
+        box-shadow: 0 35px 80px rgba(0,0,0,0.16);
     }
     
     .grid-item:hover::before {
         opacity: 1;
     }
     
-    .grid-item:hover::after {
-        opacity: 1;
-    }
-    
     .grid-item h3 {
-        font-size: 18px;
-        margin-bottom: 18px;
+        font-size: 17px;
+        margin-bottom: 15px;
         color: #333;
-        font-weight: 800;
-        letter-spacing: 0.5px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
     }
     
     .grid-item-number {
-        font-size: 64px;
+        font-size: 56px;
         font-weight: 900;
         margin-bottom: 15px;
         background: linear-gradient(135deg, var(--color1), var(--color2));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        font-family: 'Playfair Display', serif;
     }
     
     .grid-item-unit {
         font-size: 14px;
         color: #999;
-        font-weight: 700;
-        letter-spacing: 1px;
-        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.2px;
     }
     
     .item1 { 
@@ -235,139 +184,91 @@ st.markdown("""
         --color2: #38f9d7;
     }
     
-    /* ━━━━━━━━━━━━━━ 섹션 타이틀 - 럭셔리 ━━━━━━━━━━━━━━ */
+    /* 섹션 */
     .section {
-        margin-bottom: 110px;
+        margin-bottom: 90px;
         padding: 0 20px;
     }
     
     .section-title {
-        font-size: 48px;
+        font-size: 42px;
         font-weight: 900;
-        margin-bottom: 55px;
-        color: #ffffff;
-        padding-bottom: 30px;
-        border-bottom: 3px solid;
-        border-image: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%) 1;
+        margin-bottom: 50px;
+        color: #222;
+        padding-bottom: 25px;
+        border-bottom: 5px solid;
+        border-image: linear-gradient(90deg, #667eea 0%, #764ba2 100%) 1;
         position: relative;
-        letter-spacing: -1px;
-        font-family: 'Playfair Display', serif;
+        letter-spacing: -0.5px;
     }
     
     .section-title::after {
         content: '';
         position: absolute;
-        bottom: -20px;
+        bottom: -15px;
         left: 0;
-        width: 120px;
-        height: 6px;
-        background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+        width: 80px;
+        height: 5px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
         border-radius: 3px;
-        box-shadow: 0 0 30px rgba(102, 126, 234, 0.4);
     }
     
-    /* ━━━━━━━━━━━━━━ 정보 카드 - 프리미엄 ━━━━━━━━━━━━━━ */
+    /* 정보 카드 - 프리미엄 */
     .info-card {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
-        padding: 45px;
-        border-radius: 22px;
-        box-shadow: 
-            0 15px 50px rgba(0,0,0,0.12),
-            0 0 30px rgba(102, 126, 234, 0.08),
-            inset 0 1px 0 rgba(255,255,255,0.8);
-        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        background: white;
+        padding: 40px;
+        border-radius: 18px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         position: relative;
-        border-left: 8px solid #667eea;
-        border: 1px solid rgba(255,255,255,0.5);
-        overflow: hidden;
-    }
-    
-    .info-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(102,126,234,0.3), transparent);
+        border-left: 6px solid #667eea;
     }
     
     .info-card:hover {
-        transform: translateX(10px) translateY(-5px);
-        box-shadow: 
-            0 25px 70px rgba(0,0,0,0.15),
-            0 0 40px rgba(102, 126, 234, 0.2);
+        transform: translateX(8px);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
     }
     
     .info-card h4 {
-        font-size: 22px;
-        margin-bottom: 22px;
+        font-size: 20px;
+        margin-bottom: 20px;
         color: #222;
         font-weight: 800;
-        letter-spacing: -0.5px;
-        font-family: 'Playfair Display', serif;
+        letter-spacing: -0.3px;
     }
     
     .info-card p {
         color: #666;
-        line-height: 2.2;
+        line-height: 2;
         font-size: 15px;
         font-weight: 500;
     }
     
-    /* ━━━━━━━━━━━━━━ 하이라이트 박스 - 럭셔리 ━━━━━━━━━━━━━━ */
+    /* 강조 박스 - 프리미엄 */
     .highlight-box {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
-        padding: 40px;
-        border-left: 8px solid #667eea;
-        border-radius: 20px;
-        margin: 45px 0;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.08) 100%);
+        padding: 35px;
+        border-left: 6px solid #667eea;
+        border-radius: 16px;
+        margin: 40px 0;
         font-size: 16px;
-        color: #f0f0f0;
+        color: #333;
         line-height: 2;
         font-weight: 500;
-        box-shadow: 
-            inset 0 2px 10px rgba(0,0,0,0.05),
-            0 10px 30px rgba(102, 126, 234, 0.1);
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.04);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(102,126,234,0.3);
-        position: relative;
-        overflow: hidden;
     }
     
-    .highlight-box::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(circle at 100% 0%, rgba(240,147,251,0.1) 0%, transparent 50%);
-        pointer-events: none;
-    }
-    
-    /* ━━━━━━━━━━━━━━ 플로우 스텝 - 디테일 ━━━━━━━━━━━━━━ */
+    /* 플로우 스텝 - 프리미엄 */
     .flow-step {
         display: flex;
         align-items: flex-start;
-        margin-bottom: 30px;
-        animation: slideInLeft 0.8s ease-out;
-    }
-    
-    @keyframes slideInLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+        margin-bottom: 25px;
     }
     
     .flow-number {
-        width: 75px;
-        height: 75px;
+        width: 65px;
+        height: 65px;
         background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
         border-radius: 50%;
@@ -375,152 +276,119 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 28px;
-        margin-right: 28px;
+        font-size: 26px;
+        margin-right: 25px;
         flex-shrink: 0;
-        box-shadow: 
-            0 20px 50px rgba(102, 126, 234, 0.4),
-            inset 0 2px 0 rgba(255,255,255,0.2);
-        border: 2px solid rgba(255,255,255,0.2);
-        font-family: 'Playfair Display', serif;
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
     }
     
     .flow-content {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
-        padding: 26px 32px;
-        border-radius: 18px;
-        box-shadow: 
-            0 8px 25px rgba(0,0,0,0.1),
-            0 0 20px rgba(102, 126, 234, 0.08),
-            inset 0 1px 0 rgba(255,255,255,0.8);
+        background: white;
+        padding: 22px 28px;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
         flex-grow: 1;
-        border-left: 6px solid #667eea;
-        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        border: 1px solid rgba(255,255,255,0.5);
+        border-left: 5px solid #667eea;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     
     .flow-content:hover {
-        box-shadow: 
-            0 18px 45px rgba(102, 126, 234, 0.25),
-            0 0 30px rgba(102, 126, 234, 0.15);
-        transform: translateX(8px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.18);
+        transform: translateX(5px);
     }
     
     .flow-content strong {
         color: #222;
         display: block;
-        margin-bottom: 10px;
-        font-size: 17px;
-        font-weight: 800;
-        font-family: 'Playfair Display', serif;
+        margin-bottom: 8px;
+        font-size: 16px;
+        font-weight: 700;
     }
     
     .flow-content p {
         color: #666;
         font-size: 14px;
         margin: 0;
-        line-height: 1.8;
+        line-height: 1.7;
         font-weight: 500;
     }
     
-    /* ━━━━━━━━━━━━━━ 메트릭 카드 - 쇼케이스 ━━━━━━━━━━━━━━ */
+    /* 메트릭 카드 - 프리미엄 */
     .metric-card {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
-        padding: 50px;
-        border-radius: 24px;
-        box-shadow: 
-            0 20px 60px rgba(0,0,0,0.12),
-            0 0 40px rgba(102, 126, 234, 0.12),
-            inset 0 1px 0 rgba(255,255,255,0.8);
+        background: white;
+        padding: 40px;
+        border-radius: 18px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.08);
         text-align: center;
-        transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         cursor: pointer;
         position: relative;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.5);
     }
     
     .metric-card::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(102,126,234,0.4), transparent);
-    }
-    
-    .metric-card::after {
-        content: '';
-        position: absolute;
-        top: -100%;
-        left: -100%;
-        width: 300%;
-        height: 300%;
-        background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
         opacity: 0;
-        transition: opacity 0.7s;
+        transition: opacity 0.5s;
     }
     
     .metric-card:hover {
-        transform: translateY(-15px) scale(1.06);
-        box-shadow: 
-            0 35px 90px rgba(0,0,0,0.18),
-            0 0 60px rgba(102, 126, 234, 0.3);
+        transform: translateY(-12px);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.15);
     }
     
-    .metric-card:hover::after {
+    .metric-card:hover::before {
         opacity: 1;
     }
     
     .metric-value {
-        font-size: 60px;
+        font-size: 52px;
         font-weight: 900;
         color: #667eea;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         position: relative;
         z-index: 1;
-        font-family: 'Playfair Display', serif;
     }
     
     .metric-label {
-        font-size: 15px;
+        font-size: 14px;
         color: #999;
-        font-weight: 800;
+        font-weight: 700;
         position: relative;
         z-index: 1;
-        letter-spacing: 1px;
-        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
     
-    /* ━━━━━━━━━━━━━━ 테이블 - 럭셔리 ━━━━━━━━━━━━━━ */
+    /* 테이블 - 프리미엄 */
     .simple-table {
         width: 100%;
         border-collapse: collapse;
-        margin: 40px 0;
+        margin: 35px 0;
         font-size: 14px;
-        border-radius: 18px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 
-            0 20px 60px rgba(0,0,0,0.15),
-            0 0 40px rgba(102, 126, 234, 0.12);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
     }
     
     .simple-table th {
         background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
-        padding: 24px;
+        padding: 20px;
         text-align: left;
         font-weight: 800;
-        letter-spacing: 0.5px;
-        font-size: 15px;
+        letter-spacing: 0.3px;
     }
     
     .simple-table td {
-        padding: 20px 24px;
-        border-bottom: 1px solid rgba(102,126,234,0.05);
+        padding: 18px 20px;
+        border-bottom: 1px solid #f0f0f0;
         font-weight: 500;
-        color: #666;
     }
     
     .simple-table tr:hover {
@@ -531,50 +399,45 @@ st.markdown("""
         border-bottom: none;
     }
     
-    /* ━━━━━━━━━━━━━━ 푸터 - 피날레 ━━━━━━━━━━━━━━ */
+    /* 푸터 */
     .footer {
         text-align: center;
-        padding: 60px 40px;
-        background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(240,147,251,0.05) 100%);
-        border-top: 2px solid rgba(102,126,234,0.2);
-        margin-top: 120px;
-        font-size: 15px;
+        padding: 50px 40px;
+        color: #999;
+        border-top: 2px solid #e0e0e0;
+        margin-top: 100px;
+        font-size: 14px;
         font-weight: 600;
-        letter-spacing: 0.5px;
-        color: #bbb;
-        border-radius: 20px 20px 0 0;
-        box-shadow: inset 0 2px 20px rgba(0,0,0,0.1);
+        letter-spacing: 0.3px;
     }
     
-    .footer strong {
-        color: #ddd;
+    /* 서브헤더 */
+    .stSubheader {
+        font-size: 26px;
+        font-weight: 800 !important;
+        color: #333 !important;
+        margin-top: 40px !important;
+        margin-bottom: 30px !important;
     }
     
-    /* ━━━━━━━━━━━━━━ 반응형 ━━━━━━━━━━━━━━ */
+    /* 반응형 */
     @media (max-width: 768px) {
         .grid-container {
             grid-template-columns: repeat(2, 1fr);
         }
         
         .main-header h1 {
-            font-size: 40px;
+            font-size: 36px;
         }
         
         .main-header p {
-            font-size: 20px;
-        }
-        
-        .section-title {
-            font-size: 36px;
+            font-size: 18px;
         }
     }
     </style>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 메인 헤더
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="main-header">
     <h1>🧠 우울해하는 학생들을 미리 찾아내는 AI</h1>
@@ -582,10 +445,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 핵심 수치
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="grid-container">
     <div class="grid-item item1">
@@ -611,10 +471,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 1. 문제 정의
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">1. 왜 이 문제를 풀어야 할까?</div>
@@ -653,10 +510,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 2. 데이터
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">2. 어떤 데이터를 봤을까?</div>
@@ -718,10 +572,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 3. 모델 선택
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">3. AI 모델 선택 (왜 이것을 골랐을까?)</div>
@@ -756,13 +607,13 @@ table_html = """
         <td>이해하기 쉬움</td>
         <td>데이터에 너무 딱 맞아서 새 데이터에 약함</td>
     </tr>
-    <tr style="background: linear-gradient(90deg, rgba(79, 172, 254, 0.15), transparent);">
+    <tr style="background: linear-gradient(90deg, rgba(79, 172, 254, 0.12), transparent);">
         <td><strong>🏆 Random Forest</strong></td>
         <td><strong>83%</strong></td>
         <td><strong>높은 정확도, 요인 파악 가능</strong></td>
         <td>좀 느림</td>
     </tr>
-    <tr style="background: linear-gradient(90deg, rgba(67, 233, 123, 0.15), transparent);">
+    <tr style="background: linear-gradient(90deg, rgba(67, 233, 123, 0.12), transparent);">
         <td><strong>⭐ XGBoost</strong></td>
         <td><strong>86%</strong></td>
         <td><strong>가장 높은 정확도</strong></td>
@@ -810,10 +661,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 4. 평가 지표
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">4. AI가 잘 작동하는지 어떻게 확인할까?</div>
@@ -886,10 +734,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 5. 작동 방식
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">5. AI를 어떻게 만들까?</div>
@@ -916,10 +761,7 @@ for step in steps:
     </div>
     """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 6. 기대 효과
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">6. 이걸 만들면 뭐가 좋을까?</div>
@@ -986,10 +828,7 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 7. 한계
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">7. 근데 이것만으로 부족한 점들</div>
@@ -1022,10 +861,7 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 8. 주의사항
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="section">
     <div class="section-title">8. 꼭 기억할 것</div>
@@ -1041,16 +877,12 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 푸터
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 st.markdown("""
 <div class="footer">
-🧠 <strong>청소년 정신건강 AI 프로젝트</strong> | 2024<br>
-<span style="margin-top: 15px; display: block;">문제 정의 • 데이터 수집 • 모델 선정 • 기대효과</span>
-<span style="margin-top: 20px; display: block; font-size: 12px;">
-<strong>필수 라이브러리:</strong> streamlit • pandas • numpy • plotly<br>
+🧠 청소년 정신건강 AI 프로젝트 | 2024<br>
+<span style="font-size: 12px; margin-top: 15px; display: block;">문제 정의 • 데이터 수집 • 모델 선정 • 기대효과</span>
+<span style="font-size: 11px; margin-top: 10px; display: block; color: #ccc;">
+<strong>필수 라이브러리:</strong> streamlit==1.28.1, pandas==2.0.3, numpy==1.24.3, plotly==5.17.0<br>
 <strong>설치:</strong> pip install -r requirements.txt<br>
 <strong>실행:</strong> streamlit run app.py
 </span>
