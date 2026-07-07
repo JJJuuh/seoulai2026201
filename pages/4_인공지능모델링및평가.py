@@ -143,7 +143,7 @@ if data_loaded:
                 st.markdown(f"현재 `{selected_model_name}` 모델은 **최적의 일반화 밸런스**를 이루고 있습니다. 두 데이터셋의 스코어가 균형을 이루어 편향 없이 가장 완벽하게 분류해 낼 수 있는 견고한 상태입니다.")
 
     # -----------------------------------------------------
-    # 4. 실시간 분석 결과 리포트 (수면 -> SNS 시간별로 수정 완료)
+    # 4. 실시간 분석 결과 리포트
     # -----------------------------------------------------
     st.markdown("---")
     st.subheader("📊 실시간 분석 결과 리포트")
@@ -159,7 +159,7 @@ if data_loaded:
     tab1, tab2, tab3, tab4 = st.tabs([
         "🥇 모델별 성능 비교", 
         "🔑 핵심 영향 요인 분석", 
-        "📈 SNS사용시간별 예측 경향",  # 탭 이름 변경
+        "📈 SNS사용시간별 예측 경향", 
         "🔲 혼동 행렬 격자 점검"
     ])
     
@@ -213,14 +213,13 @@ if data_loaded:
                    f"현재 제어판 수치 기준으로 `{selected_model_name}`이 청소년의 스트레스를 예측할 때 "
                    f"가장 결정적인 단서로 지목한 생활 패턴은 **{top_feature}** 입니다. 이 요인의 변화가 예측 결과에 가장 큰 변동을 줍니다.")
 
-    # --- [탭 3] SNS사용시간별 예측 경향 (수정 완료) ---
+    # --- [탭 3] SNS사용시간별 예측 경향 ---
     with tab3:
         st.markdown(f"##### {selected_model_name}의 SNS 사용 시간별 예측 경향 그래프")
         y_true = results[selected_model_name]["y_test"]
         y_pred = results[selected_model_name]["y_pred"]
         
         fig3, ax3 = plt.subplots(figsize=(10, 3.8))
-        # 수면시간(sleep_hours) 대신 SNS사용시간(daily_social_media_hours) 기반 플롯
         sns.scatterplot(x=X_test_df['daily_social_media_hours'], y=y_true, alpha=0.3, label='Actual Data', color='#b2bec3', ax=ax3)
         sns.lineplot(x=X_test_df['daily_social_media_hours'], y=y_pred, color='#e67e22', marker='o', label='AI Predict Trend', ax=ax3, errorbar=None)
         ax3.set_xlabel("Daily SNS Hours", color='white')
@@ -230,12 +229,11 @@ if data_loaded:
         for text in legend3.get_texts(): text.set_color('white')
         st.pyplot(fig3)
         
-        # SNS 이용 시간에 따른 인공지능 트렌드 수치 분석 소견 자동 연산
         low_sns_pred = y_pred[X_test_df['daily_social_media_hours'] <= 3.0].mean()
         high_sns_pred = y_pred[X_test_df['daily_social_media_hours'] > 5.0].mean()
         st.success(f"📈 **실시간 그래프 분석 결과:** \n"
                    f"주황색 AI 예측 트렌드 선의 흐름을 분석한 결과, 하루 SNS 이용 시간이 3시간 이하인 집단의 예측 스트레스 평균은 **{low_sns_pred:.1f}점**인 반면, "
-                   f"5시간을 초과하여 장시간 몰입할 때의 예측 평균은 **{high_sns_pred:.1f}점**으로 뚜렷하게 점수가 상승하는 경향성(우상향)을 실시간으로 그려내고 있습니다.")
+                   f"5시간을 초과하여 장시간 몰입할 때의 예측 평균은 **{high_sns_pred:.1f}점**으로 뚜렷하게 점수가 상승하는 경향성(우하향)을 실시간으로 그려내고 있습니다.")
 
     # --- [탭 4] 혼동 행렬 격자 점검 ---
     with tab4:
@@ -263,6 +261,29 @@ if data_loaded:
         }
         for name, info in results.items()
     ]))
+
+    # -----------------------------------------------------
+    # 🌟 [신규 추가] 왜 Random Forest 모델이 최종 채택되었는가? (선정 타당성 보고서)
+    # -----------------------------------------------------
+    st.markdown("---")
+    st.markdown("### 🏆 왜 이 프로젝트의 최적 알고리즘으로 'Random Forest'를 선정했을까요?")
+    
+    with st.container(border=True):
+        reason_col1, reason_col2 = st.columns(2)
+        with reason_col1:
+            st.markdown("""
+            * **비선형적 다중 결합 패턴 분석의 최강자**
+                * 청소년의 스트레스(1~10)는 단순히 'SNS를 많이 하면 선형적으로 정비례해서 증가'하는 단순한 구조가 아닙니다. "성적이 낮으면서 수면도 부족할 때 발생하는 시너지 악화"처럼 **여러 복잡한 생활 패턴의 교차 조건**을 찾아내야 합니다. 수많은 독립적인 나무(Tree)를 심는 랜덤 포레스트는 이러한 비선형적 상호작용 정보를 가장 유연하게 학습합니다.
+            * **데이터 불균형 및 다중 클래스(1~10점) 예측의 안정성**
+                * 실제 청소년 설문 조사 데이터는 특정 스트레스 점수(예: 5점이나 6점)에 샘플이 몰려있고 극단적인 점수(1점이나 10점)는 부족한 **데이터 불균형**이 심합니다. 선형 분류 모델이나 단일 의사결정나무는 다수 클래스에 편향되기 쉽지만, 랜덤 포레스트는 **배깅(Bagging) 기법과 다수결 투표**를 통해 불균형 속에서도 모든 점수대를 골고루 가장 잘 분류해 냅니다.
+            """)
+        with reason_col2:
+            st.markdown("""
+            * **탁월한 과적합(Overfitting) 방어력**
+                * 단일 의사결정나무(Decision Tree)는 복잡한 청소년 데이터의 노이즈까지 전부 외워버려 쉽게 과적합에 빠집니다. 반면, 랜덤 포레스트는 무작위로 복원 추출된 데이터 셋군과 무작위 피처 조합으로 수백 개의 나무를 독립적으로 빌드한 뒤 평균을 내기 때문에, 모델의 복잡도가 높아져도 **과적합 위험도가 매우 낮고 실전 응용(일반화) 능력이 압도적**입니다.
+            * **피처 중요도(Feature Importance) 도출 가능**
+                * 딥러닝과 달리 내부 연산이 끝난 후 **"어떤 생활 지표(수면, SNS 등)가 스트레스 유발에 몇 %의 영향력을 행사했는지"** 수치적 중요도를 명확하게 제공합니다. 이는 단순 예측을 넘어 '청소년 디지털 웰빙 가이드라인'이라는 리포트 결론을 도출하는 데 학술적으로 가장 명확한 근거 정보가 됩니다.
+            """)
 
     # -----------------------------------------------------
     # 5. 실시간 스트레스 지수 예측기 및 입체적 분석 리포트
