@@ -11,20 +11,13 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
 st.set_page_config(layout="wide", page_title="AI 정신건강 분석 대시보드", page_icon="🤖") 
 
-# 🌟 시스템 테마(다크/라이트)에 따라 자동으로 글자색이 반전되는 세련된 유동성 CSS 🌟
+# 🌟 테마(다크/라이트)에 따라 글자색이 부드럽게 자동 반전되는 안전한 CSS 🌟
 st.markdown("""
     <style>
         .block-container { padding-top: 2.5rem; padding-bottom: 2rem; }
-        
-        /* 특정 테마색을 강제하지 않고 시스템 전역 폰트 색상을 상속받아 자동으로 반전되도록 설정 */
-        h1, h3, h5, p, span { font-family: inherit; }
         h1 { font-weight: 800; letter-spacing: -0.05em; }
         h3 { font-weight: 700; margin-top: 1.5rem; }
-        
-        /* 탭 메뉴 글씨 가독성 강화 */
         .stTabs [data-baseweb="tab"] { font-size: 15px; font-weight: 700; padding: 10px 20px; }
-        
-        /* 제어판 테두리 및 배경을 시스템 테마에 맞춤 (안 보이지 않게 투명도 활용) */
         div[data-testid="stContainer"] { 
             border-color: rgba(128, 128, 128, 0.3) !important; 
             background-color: rgba(128, 128, 128, 0.05); 
@@ -135,25 +128,26 @@ if data_loaded:
                 st.markdown(f"훈련({train_acc*100:.1f}%)과 검증({test_acc*100:.1f}%)의 밸런스가 정교하게 맞물린 최적의 일반화 상태입니다. 실전 신뢰도가 매우 높습니다.")
 
     # -----------------------------------------------------
-    # 4. 실시간 분석 결과 리포트 (테마 자동 동기화 렌더링)
+    # 4. 실시간 분석 결과 리포트 (오류 없는 안전한 하이브리드 테마 세팅)
     # -----------------------------------------------------
     st.markdown("---")
     st.subheader("📊 실시간 분석 결과 리포트")
     
-    # 🌟 [핵심 변경] Matplotlib 그래프가 시스템 다크/라이트 테마 색상을 자동으로 감지하도록 설정 🌟
-    # 배경을 투명하게 만들어 Streamlit 테마색이 그대로 비치도록 유도하고, 축과 글씨는 기본 스타일 테마를 따릅니다.
-    plt.rcParams['figure.facecolor'] = 'none'
-    plt.rcParams['axes.facecolor'] = 'none'
+    # 🌟 [오류 해결핵심] 사용자 현재 브라우저의 어두움 유무를 안전하게 판단하여 변수로 스위칭 🌟
+    is_dark = st.get_option("theme.base") == "dark"
+    text_color = "#ffffff" if is_dark else "#2c3e50"
+    grid_style = "darkgrid" if is_dark else "whitegrid"
     
-    # 테마에 따라 텍스트가 동적으로 반전될 수 있도록 Matplotlib의 스타일 설정을 초기화합니다.
     plt.style.use('default') 
     plt.rcParams.update({
-        "text.color": "auto",
-        "axes.labelcolor": "auto",
-        "xtick.color": "auto",
-        "ytick.color": "auto"
+        "text.color": text_color,
+        "axes.labelcolor": text_color,
+        "xtick.color": text_color,
+        "ytick.color": text_color,
+        "figure.facecolor": "none",
+        "axes.facecolor": "none"
     })
-    sns.set_style("whitegrid" if st.get_option("theme.base") == "light" else "darkgrid")
+    sns.set_style(grid_style)
 
     tab1, tab2, tab3, tab4 = st.tabs([
         "🥇 모델별 성능 비교", 
@@ -173,15 +167,14 @@ if data_loaded:
         y_min = max(0.0, float(np.floor(min(all_scores) * 20) / 20) - 0.05) 
         y_max = min(1.0, float(np.ceil(max(all_scores) * 20) / 20) + 0.05)
         
-        # 🌟 Streamlit 전용 차트 컬러 자동 스케일링 기법 🌟
         fig1, ax1 = plt.subplots(figsize=(10, 3.8))
         ax1.plot(names, accs, marker='o', markersize=8, linewidth=2.5, label='Accuracy', color='#3498db')
         ax1.plot(names, f1s, marker='s', markersize=8, linewidth=2.5, label='F1-Score', color='#e67e22')
         ax1.set_ylim(y_min, y_max)
         sns.despine()
         
-        # 테마 맞춤형 범례 상자 생성
         legend1 = ax1.legend(facecolor='none', edgecolor='gray')
+        for text in legend1.get_texts(): text.set_color(text_color)
         st.pyplot(fig1)
         
         best_acc_model = max(results, key=lambda k: results[k]["accuracy"])
@@ -219,6 +212,7 @@ if data_loaded:
         sns.lineplot(x=X_test_df['daily_social_media_hours'], y=y_pred, color='#e67e22', marker='o', label='AI Predict Trend', ax=ax3, errorbar=None)
         sns.despine()
         legend3 = ax3.legend(facecolor='none', edgecolor='gray')
+        for text in legend3.get_texts(): text.set_color(text_color)
         st.pyplot(fig3)
         
         low_sns_pred = y_pred[X_test_df['daily_social_media_hours'] <= 3.0].mean()
@@ -231,8 +225,8 @@ if data_loaded:
         cm = results[selected_model_name]["confusion_matrix"]
         fig4, ax4 = plt.subplots(figsize=(6, 3.8))
         
-        # 맵 글자 색상이 배경 밝기에 맞게 선명하게 표출되도록 설정
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4, annot_kws={"weight": "bold"})
+        # 격자 히트맵 글자 오버레이 에러 방지 처리
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4, annot_kws={"weight": "bold", "color": "black" if not is_dark else "white"})
         st.pyplot(fig4)
         
         total_samples = np.sum(cm)
