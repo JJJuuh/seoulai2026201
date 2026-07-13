@@ -7,11 +7,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, precision_score, recall_score
 
 st.set_page_config(layout="wide", page_title="AI 정신건강 분석 대시보드", page_icon="🤖") 
 
-# 🌟 테마(다크/라이트)에 따라 글자색이 부드럽게 자동 반전되는 안전한 CSS 🌟
+# 테마 자동 호환 CSS
 st.markdown("""
     <style>
         .block-container { padding-top: 2.5rem; padding-bottom: 2rem; }
@@ -80,6 +80,8 @@ def train_and_evaluate(trees, depth, c_val):
             "model": model,
             "train_accuracy": accuracy_score(y_train, y_train_pred),
             "accuracy": accuracy_score(y_test, y_test_pred),
+            "precision": precision_score(y_test, y_test_pred, average='macro', zero_division=0),
+            "recall": recall_score(y_test, y_test_pred, average='macro', zero_division=0),
             "f1_score": f1_score(y_test, y_test_pred, average='macro', zero_division=0),
             "confusion_matrix": confusion_matrix(y_test, y_test_pred),
             "y_test": y_test,
@@ -128,12 +130,11 @@ if data_loaded:
                 st.markdown(f"훈련({train_acc*100:.1f}%)과 검증({test_acc*100:.1f}%)의 밸런스가 정교하게 맞물린 최적의 일반화 상태입니다. 실전 신뢰도가 매우 높습니다.")
 
     # -----------------------------------------------------
-    # 4. 실시간 분석 결과 리포트 (오류 없는 안전한 하이브리드 테마 세팅)
+    # 4. 실시간 분석 결과 리포트
     # -----------------------------------------------------
     st.markdown("---")
     st.subheader("📊 실시간 분석 결과 리포트")
     
-    # 🌟 [오류 해결핵심] 사용자 현재 브라우저의 어두움 유무를 안전하게 판단하여 변수로 스위칭 🌟
     is_dark = st.get_option("theme.base") == "dark"
     text_color = "#ffffff" if is_dark else "#2c3e50"
     grid_style = "darkgrid" if is_dark else "whitegrid"
@@ -219,19 +220,35 @@ if data_loaded:
         high_sns_pred = y_pred[X_test_df['daily_social_media_hours'] > 5.0].mean()
         st.info(f"📈 **실시간 스냅샷:** SNS 이용량이 3시간 이하일 때 예측 평균은 **{low_sns_pred:.1f}점**이며, 5시간 초과 시 예측 평균은 **{high_sns_pred:.1f}점**으로 뚜렷이 우상향합니다.")
 
-    # --- [탭 4] 혼동 행렬 격자 점검 ---
+    # --- [탭 4] 혼동 행렬 격자 점검 (★ 개수 -> 비율로 업그레이드 완료 ★) ---
     with tab4:
-        st.markdown(f"##### {selected_model_name} 혼동 행렬 격자 그래프")
+        st.markdown(f"##### {selected_model_name} 정규화 혼동 행렬 (예측 적중 비율 그래프)")
         cm = results[selected_model_name]["confusion_matrix"]
-        fig4, ax4 = plt.subplots(figsize=(6, 3.8))
         
-        # 격자 히트맵 글자 오버레이 에러 방지 처리
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4, annot_kws={"weight": "bold", "color": "black" if not is_dark else "white"})
+        # 🌟 실제 행(True Label)의 전체 합으로 각 칸을 나누어 '비율(%)' 행렬로 변환 🌟
+        cm_ratio = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        
+        fig4, ax4 = plt.subplots(figsize=(6, 3.8))
+        # fmt='.2f'를 주어 비율을 소수점 둘째 짜리까지 출력
+        sns.heatmap(cm_ratio, annot=True, fmt='.2f', cmap='Blues', cbar=False, ax=ax4, annot_kws={"weight": "bold", "color": "black" if not is_dark else "white"})
+        ax4.set_xlabel("Predicted Label (AI 예측 점수)")
+        ax4.set_ylabel("True Label (실제 학생 점수)")
         st.pyplot(fig4)
         
-        total_samples = np.sum(cm)
-        correct_samples = np.trace(cm)
-        st.info(f"🔲 **실시간 스냅샷:** 검증 표본 {total_samples}건 중 정중앙 대각선 격자에 일치하여 오차 없이 정확히 분류해 낸 데이터는 총 **{correct_samples}건**입니다.")
+        # 📌 비율 그래프 하단 전용 세부 지표 용어 사전 탑재
+        st.markdown("---")
+        st.markdown("##### 💡 통계 지표 분석 룸 (이 모델의 진짜 성적표)")
+        m_col1, m_col2, m_col3 = st.columns(3)
+        
+        with m_col1:
+            st.metric(label="🎯 모델 정확도 (Accuracy)", value=f"{results[selected_model_name]['accuracy']*100:.1f}%")
+            st.caption("전체 청소년 샘플 중 AI가 실제 스트레스 점수를 정확하게 맞춘 총체적 비율입니다.")
+        with m_col2:
+            st.metric(label="🔍 모델 정밀도 (Precision)", value=f"{results[selected_model_name]['precision']:.2f}")
+            st.caption("AI가 '이 학생은 스트레스가 X점이야!'라고 **예측한 것들 중** 실제 정답인 비율입니다. (과잉 진단 방지 지표)")
+        with m_col3:
+            st.metric(label="📢 모델 재현율 (Recall)", value=f"{results[selected_model_name]['recall']:.2f}")
+            st.caption("실제로 스트레스가 X점인 청소년들 중 AI가 **놓치지 않고 골라낸** 비율입니다. (위험군 누락 방지 지표)")
 
     st.markdown("<p style='font-size:15px; font-weight:600; margin-bottom:-5px; margin-top:20px;'>📋 전 알고리즘 성능 스코어보드 요약</p>", unsafe_allow_html=True)
     st.table(pd.DataFrame([
