@@ -477,35 +477,35 @@ elif page == "📊 데이터 수집":
     st.divider()
     
     # 12가지 항목 시각화
-    st.markdown("### 📥 수집한 12가지 항목")
+    st.markdown("### 📥 수집한 데이터 12가지 항목")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
-        **🎮 행동 습관**
-        - SNS 시간
-        - 수면 시간
-        - 운동 시간
-        - 공부 성적
+        
+        - age (나이)
+        - gender (성별)
+        - daily_social_media_hours (하루 소셜미디어 사용 시간)
+        - platform_usage (사용하는 플랫폼)
         """)
     
     with col2:
         st.markdown("""
-        **😟 마음 상태**
-        - 스트레스 (1~10)
-        - 불안감 (1~10)
-        - 휴대폰 중독
-        - 친구 만남 정도
+        
+        - sleep_hours (수면 시간)
+        - screen_time_before_sleep (취침 전 휴대폰 사용 시간)
+        - academic_performance (학업 성취도)
+        - physical_activity (신체 활동)
         """)
     
     with col3:
         st.markdown("""
-        **📱 기타**
-        - 자기 전 핸드폰
-        - 학교 만족도
-        - 가족 관계
-        - 우울증 여부 ✓
+        
+        - social_interaction_level (사회적 상호작용 수준)
+        - stress_level (스트레스 수준)
+        - anxiety_level (불안 수준)
+        - addiction_level (중독 수준)
         """)
     
     st.divider()
