@@ -11,24 +11,24 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
 st.set_page_config(layout="wide", page_title="AI 정신건강 분석 대시보드", page_icon="🤖") 
 
-# 🌟 밝은 배경 테마(Light Mode) 가시성 극대화를 위한 CSS 스타일 시트 선언 🌟
+# 🌟 시스템 테마(다크/라이트)에 따라 자동으로 글자색이 반전되는 세련된 유동성 CSS 🌟
 st.markdown("""
     <style>
         .block-container { padding-top: 2.5rem; padding-bottom: 2rem; }
-        /* 메인 타이틀 및 텍스트 검은색/차콜 계열로 명도 대비 극대화 */
-        h1 { font-weight: 800; color: #1e272e !important; letter-spacing: -0.05em; }
-        h3 { font-weight: 700; color: #2c3e50 !important; margin-top: 1.5rem; }
-        h5 { font-weight: 600; color: #2c3e50 !important; }
-        p { color: #2c3e50 !important; }
-        div[data-testid="stMarkdownContainer"] p { color: #2c3e50 !important; font-size: 15px; }
         
-        /* 탭 메뉴 글씨 및 슬라이더 라벨 선명화 */
-        .stTabs [data-baseweb="tab"] { font-size: 15px; font-weight: 700; color: #2c3e50; padding: 10px 20px; }
-        .stTabs [data-baseweb="tab"][aria-selected="true"] { color: #3498db !important; }
-        label[data-testid="stWidgetLabel"] p { color: #1e272e !important; font-weight: 600 !important; }
+        /* 특정 테마색을 강제하지 않고 시스템 전역 폰트 색상을 상속받아 자동으로 반전되도록 설정 */
+        h1, h3, h5, p, span { font-family: inherit; }
+        h1 { font-weight: 800; letter-spacing: -0.05em; }
+        h3 { font-weight: 700; margin-top: 1.5rem; }
         
-        /* 제어판 테두리 어둡게 강조 */
-        div[data-testid="stContainer"] { border-color: #cbd5e1 !important; background-color: #f8fafc; }
+        /* 탭 메뉴 글씨 가독성 강화 */
+        .stTabs [data-baseweb="tab"] { font-size: 15px; font-weight: 700; padding: 10px 20px; }
+        
+        /* 제어판 테두리 및 배경을 시스템 테마에 맞춤 (안 보이지 않게 투명도 활용) */
+        div[data-testid="stContainer"] { 
+            border-color: rgba(128, 128, 128, 0.3) !important; 
+            background-color: rgba(128, 128, 128, 0.05); 
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -36,7 +36,7 @@ st.title("🤖 4. 인공지능 모델링 및 평가 대시보드")
 st.markdown("알고리즘 조절 나사를 제어하며 청소년의 생활 패턴과 스트레스 지수(1~10) 간의 상관관계를 다각도로 분석합니다.")
 
 # -----------------------------------------------------
-# 1. 화면 중간/상단 가로 제어판 (밝은 테두리로 정돈)
+# 1. 화면 중간/상단 가로 제어판
 # -----------------------------------------------------
 with st.container(border=True):
     st.markdown("##### 🛠️ AI 실험실 설정 제어판")
@@ -135,19 +135,25 @@ if data_loaded:
                 st.markdown(f"훈련({train_acc*100:.1f}%)과 검증({test_acc*100:.1f}%)의 밸런스가 정교하게 맞물린 최적의 일반화 상태입니다. 실전 신뢰도가 매우 높습니다.")
 
     # -----------------------------------------------------
-    # 4. 실시간 분석 결과 리포트 (밝은 배경에 맞는 폰트 테마 커스텀)
+    # 4. 실시간 분석 결과 리포트 (테마 자동 동기화 렌더링)
     # -----------------------------------------------------
     st.markdown("---")
     st.subheader("📊 실시간 분석 결과 리포트")
     
-    # 🌟 그래프 글씨를 선명한 검은색/어두운 색상으로 변경 🌟
-    plt.rcParams['text.color'] = '#2c3e50'
-    plt.rcParams['axes.labelcolor'] = '#2c3e50'
-    plt.rcParams['xtick.color'] = '#2c3e50'
-    plt.rcParams['ytick.color'] = '#2c3e50'
-    plt.rcParams['axes.facecolor'] = '#ffffff'
-    plt.rcParams['figure.facecolor'] = '#ffffff'
-    sns.set_style("whitegrid") # 가독성을 높이기 위해 밝은 배경용 기본 가이드 라인 제공
+    # 🌟 [핵심 변경] Matplotlib 그래프가 시스템 다크/라이트 테마 색상을 자동으로 감지하도록 설정 🌟
+    # 배경을 투명하게 만들어 Streamlit 테마색이 그대로 비치도록 유도하고, 축과 글씨는 기본 스타일 테마를 따릅니다.
+    plt.rcParams['figure.facecolor'] = 'none'
+    plt.rcParams['axes.facecolor'] = 'none'
+    
+    # 테마에 따라 텍스트가 동적으로 반전될 수 있도록 Matplotlib의 스타일 설정을 초기화합니다.
+    plt.style.use('default') 
+    plt.rcParams.update({
+        "text.color": "auto",
+        "axes.labelcolor": "auto",
+        "xtick.color": "auto",
+        "ytick.color": "auto"
+    })
+    sns.set_style("whitegrid" if st.get_option("theme.base") == "light" else "darkgrid")
 
     tab1, tab2, tab3, tab4 = st.tabs([
         "🥇 모델별 성능 비교", 
@@ -167,13 +173,15 @@ if data_loaded:
         y_min = max(0.0, float(np.floor(min(all_scores) * 20) / 20) - 0.05) 
         y_max = min(1.0, float(np.ceil(max(all_scores) * 20) / 20) + 0.05)
         
+        # 🌟 Streamlit 전용 차트 컬러 자동 스케일링 기법 🌟
         fig1, ax1 = plt.subplots(figsize=(10, 3.8))
-        ax1.plot(names, accs, marker='o', markersize=8, linewidth=2.5, label='Accuracy', color='#2980b9')
-        ax1.plot(names, f1s, marker='s', markersize=8, linewidth=2.5, label='F1-Score', color='#d35400')
+        ax1.plot(names, accs, marker='o', markersize=8, linewidth=2.5, label='Accuracy', color='#3498db')
+        ax1.plot(names, f1s, marker='s', markersize=8, linewidth=2.5, label='F1-Score', color='#e67e22')
         ax1.set_ylim(y_min, y_max)
-        sns.despine(left=True, bottom=True)
-        legend1 = ax1.legend(facecolor='#ffffff', edgecolor='#cbd5e1')
-        for text in legend1.get_texts(): text.set_color('#2c3e50')
+        sns.despine()
+        
+        # 테마 맞춤형 범례 상자 생성
+        legend1 = ax1.legend(facecolor='none', edgecolor='gray')
         st.pyplot(fig1)
         
         best_acc_model = max(results, key=lambda k: results[k]["accuracy"])
@@ -194,8 +202,7 @@ if data_loaded:
             importances = np.abs(current_model.coef_[0])[:4] 
             sns.barplot(x=importances, y=core_labels, ax=ax2, palette="rocket")
             
-        ax2.set_xlabel("Importance", color='#2c3e50')
-        sns.despine(left=True, bottom=True)
+        sns.despine()
         st.pyplot(fig2)
         
         top_feature = core_labels[np.argmax(importances)]
@@ -210,11 +217,8 @@ if data_loaded:
         fig3, ax3 = plt.subplots(figsize=(10, 3.8))
         sns.scatterplot(x=X_test_df['daily_social_media_hours'], y=y_true, alpha=0.4, label='Actual Data', color='#7f8c8d', ax=ax3)
         sns.lineplot(x=X_test_df['daily_social_media_hours'], y=y_pred, color='#e67e22', marker='o', label='AI Predict Trend', ax=ax3, errorbar=None)
-        ax3.set_xlabel("Daily SNS Hours", color='#2c3e50')
-        ax3.set_ylabel("Stress Level (1~10)", color='#2c3e50')
-        sns.despine(left=True, bottom=True)
-        legend3 = ax3.legend(facecolor='#ffffff', edgecolor='#cbd5e1')
-        for text in legend3.get_texts(): text.set_color('#2c3e50')
+        sns.despine()
+        legend3 = ax3.legend(facecolor='none', edgecolor='gray')
         st.pyplot(fig3)
         
         low_sns_pred = y_pred[X_test_df['daily_social_media_hours'] <= 3.0].mean()
@@ -227,17 +231,15 @@ if data_loaded:
         cm = results[selected_model_name]["confusion_matrix"]
         fig4, ax4 = plt.subplots(figsize=(6, 3.8))
         
-        # 글씨 명도를 고려하여 내부 숫자 글자색을 어두운 계열로 조정
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4, annot_kws={"color": "#1e272e", "weight": "bold"})
-        ax4.set_xlabel("Predicted Label", color='#2c3e50')
-        ax4.set_ylabel("True Label", color='#2c3e50')
+        # 맵 글자 색상이 배경 밝기에 맞게 선명하게 표출되도록 설정
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax4, annot_kws={"weight": "bold"})
         st.pyplot(fig4)
         
         total_samples = np.sum(cm)
         correct_samples = np.trace(cm)
         st.info(f"🔲 **실시간 스냅샷:** 검증 표본 {total_samples}건 중 정중앙 대각선 격자에 일치하여 오차 없이 정확히 분류해 낸 데이터는 총 **{correct_samples}건**입니다.")
 
-    st.markdown("<p style='font-size:15px; font-weight:600; color:#2c3e50; margin-bottom:-5px; margin-top:20px;'>📋 전 알고리즘 성능 스코어보드 요약</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:15px; font-weight:600; margin-bottom:-5px; margin-top:20px;'>📋 전 알고리즘 성능 스코어보드 요약</p>", unsafe_allow_html=True)
     st.table(pd.DataFrame([
         {
             "AI 알고리즘 이름": name, 
@@ -352,11 +354,9 @@ if data_loaded:
                 fig5, ax5 = plt.subplots(figsize=(5, 3.6))
                 original_df['Stress Group'] = np.where(original_df['stress_level'] >= 8, 'High Stress', 'Normal')
                 sns.violinplot(data=original_df, x='Stress Group', y='sleep_hours', palette={'High Stress': '#e74c3c', 'Normal': '#2ecc71'}, inner='quartile', ax=ax5)
-                ax5.set_xlabel("Stress Group", color='#2c3e50')
-                ax5.set_ylabel("Sleep Hours", color='#2c3e50')
-                sns.despine(left=True, bottom=True)
+                sns.despine()
                 st.pyplot(fig5)
-                st.markdown("<p style='font-size:12px; color:#7f8c8d; text-align:center;'>주황/빨간색 고위험군의 분포 부피가 5~6시간 구역에 뚱뚱하게 밀집되어 있어, 수면 시간 확보가 스트레스 방어의 최우선 과제임을 AI 통계 분석이 직관적으로 증명합니다.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size:12px; text-align:center;'>주황/빨간색 고위험군의 분포 부피가 5~6시간 구역에 뚱뚱하게 밀집되어 있어, 수면 시간 확보가 스트레스 방어의 최우선 과제임을 AI 통계 분석이 직관적으로 증명합니다.</p>", unsafe_allow_html=True)
 
     # -----------------------------------------------------
     # 6. 왜 Random Forest 모델이 최종 채택되었는가? (상시 노출)
